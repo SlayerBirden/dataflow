@@ -21,8 +21,32 @@ class ArrayProvider implements ProviderInterface
 
     public function __construct(string $id, array $data)
     {
+        $this->validate($data);
         $this->data = $data;
         $this->identifier = $id;
+    }
+
+    /**
+     * @param array $data
+     * @throws InvalidDataException
+     */
+    private function validate(array $data)
+    {
+        foreach ($data as $key => $row) {
+            if (!is_array($row)) {
+                throw new InvalidDataException(sprintf('Row #(%s) is not an array.', $key));
+            }
+            $localKeys = array_keys($row);
+            sort($localKeys);
+            if (isset($keys)) {
+                if ($keys != $localKeys) {
+                    throw new InvalidDataException(
+                        sprintf('Row #(%s) has different structure than the 1st element.', $key)
+                    );
+                }
+            }
+            $keys = $localKeys;
+        }
     }
 
     /**
@@ -34,5 +58,13 @@ class ArrayProvider implements ProviderInterface
             return new SimpleBag($this->data[$this->pointer++]);
         }
         throw new EmptyException(sprintf('Provider %s is empty.', $this->getIdentifier()));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function estimateSize(): int
+    {
+        return count($this->data);
     }
 }

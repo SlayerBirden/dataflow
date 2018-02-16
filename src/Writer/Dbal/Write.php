@@ -113,7 +113,11 @@ class Write implements HandlerInterface
             $stmt = $this->connection->prepare($queryBuilder->getSQL());
             $stmt->execute($id);
             $count = (int)$stmt->fetchColumn();
-            // todo throw invalid count
+            if ($count > 1) {
+                throw new InvalidIdentificationException(
+                    sprintf('Could not resolve 1 entry using given predicate: %s', json_encode($id))
+                );
+            }
             return $count === 1;
         }
         return false;
