@@ -71,17 +71,14 @@ class Write implements HandlerInterface
                 );
             }
         }
-        try {
-            if ($this->recordExists($dataBag)) {
-                $inserted = $this->connection->update(
-                    $this->table,
-                    $dataToInsert,
-                    $this->updateStrategy->getRecordIdentifier($dataBag)
-                );
-            } else {
-                $inserted = $this->connection->insert($this->table, $dataToInsert);
-            }
-        } catch (DBALException $exception) {
+        if ($this->recordExists($dataBag)) {
+            $inserted = $this->connection->update(
+                $this->table,
+                $dataToInsert,
+                $this->updateStrategy->getRecordIdentifier($dataBag)
+            );
+        } else {
+            $inserted = $this->connection->insert($this->table, $dataToInsert);
         }
 
         // TODO log
@@ -98,27 +95,25 @@ class Write implements HandlerInterface
      *
      * @param DataBagInterface $dataBag
      * @return bool
+     * @throws DBALException
      */
     private function recordExists(DataBagInterface $dataBag): bool
     {
         $id = $this->updateStrategy->getRecordIdentifier($dataBag);
 
         if (!empty($id)) {
-            try {
-                $queryBuilder = $this->connection->createQueryBuilder();
-                $queryBuilder->select('count(*)')
-                    ->from($this->table)
-                    ->setParameters($id);
-                foreach (array_keys($id) as $key) {
-                    $queryBuilder->andWhere("$key = :$key");
-                }
-                $stmt = $this->connection->query($queryBuilder->getSQL());
-                $stmt->execute();
-                $count = (int)$stmt->fetchColumn();
-                // todo throw invalid count
-                return $count === 1;
-            } catch (DBALException $e) {
+            $queryBuilder = $this->connection->createQueryBuilder();
+            $queryBuilder->select('count(*)')
+                ->from($this->table)
+                ->setParameters($id);
+            foreach (array_keys($id) as $key) {
+                $queryBuilder->andWhere("$key = :$key");
             }
+            $stmt = $this->connection->prepare($queryBuilder->getSQL());
+            $stmt->execute($id);
+            $count = (int)$stmt->fetchColumn();
+            // todo throw invalid count
+            return $count === 1;
         }
         return false;
     }

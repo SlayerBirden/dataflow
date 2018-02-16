@@ -29,14 +29,6 @@ class ArrayWrite implements HandlerInterface
     }
 
     /**
-     * @return array
-     */
-    public function getLocalStorage(): array
-    {
-        return $this->localStorage;
-    }
-
-    /**
      * @inheritdoc
      */
     public function handle(DataBagInterface $dataBag): DataBagInterface

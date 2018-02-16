@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SlayerBirden\DataFlow;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Schema\Index;
 use SlayerBirden\DataFlow\Handler\Filter;
 use SlayerBirden\DataFlow\Handler\FilterCallbackInterface;
 use SlayerBirden\DataFlow\Handler\Mapper;
@@ -20,6 +21,12 @@ class PipelineBuilder implements PipelineBuilderInterface
      * @var HandlerInterface[]
      */
     private $pipeline;
+    /**
+     * @var WriterUtilityInterface
+     */
+    private static $utility;
+
+    private $pipesCount = 0;
 
     public function addSection(HandlerInterface $handler): PipelineBuilder
     {
@@ -28,26 +35,33 @@ class PipelineBuilder implements PipelineBuilderInterface
         return $this;
     }
 
-    public function map(string $field, MapperCallbackInterface $callback): PipelineBuilder
+    public function map(string $field, MapperCallbackInterface $callback, ?string $id = null): PipelineBuilder
     {
-        // todo add id
-        return $this->addSection(new Mapper('', $field, $callback));
+        if (!$id) {
+            $id = 'mapper' . $this->pipesCount++ . '-' . $field;
+        }
+        return $this->addSection(new Mapper($id, $field, $callback));
     }
 
-    public function filter(FilterCallbackInterface $callback): PipelineBuilder
+    public function filter(FilterCallbackInterface $callback, ?string $id = null): PipelineBuilder
     {
-        // todo add id
-        return $this->addSection(new Filter('', $callback));
+        if (!$id) {
+            $id = 'filter' . $this->pipesCount++ . '-' . md5(get_class($callback));
+        }
+        return $this->addSection(new Filter($id, $callback));
     }
 
     public function dbalWrite(
         string $table,
         Connection $connection,
-        ?WriteCallbackInterface $callback = null
+        ?WriteCallbackInterface $callback = null,
+        ?string $id = null
     ): PipelineBuilder {
-        // todo add id
+        if (!$id) {
+            $id = 'dbal-write' . $this->pipesCount++ . '-' . $table;
+        }
         return $this->addSection(new Write(
-            '',
+            $id,
             $connection,
             $table,
             $this->getDbalUtility($connection),
@@ -56,9 +70,15 @@ class PipelineBuilder implements PipelineBuilderInterface
         ));
     }
 
-    public function arrayWrite(array &$storage, ?WriteCallbackInterface $callback = null): PipelineBuilder
-    {
-        return $this->addSection(new ArrayWrite('', $storage, $callback));
+    public function arrayWrite(
+        array &$storage,
+        ?WriteCallbackInterface $callback = null,
+        ?string $id = null
+    ): PipelineBuilder {
+        if (!$id) {
+            $id = 'array-write' . $this->pipesCount++;
+        }
+        return $this->addSection(new ArrayWrite($id, $storage, $callback));
     }
 
     /**
@@ -69,8 +89,43 @@ class PipelineBuilder implements PipelineBuilderInterface
         return $this->pipeline;
     }
 
-    private function getDbalUtility(Connection $connection): WriterUtilityInterface
+    public static function getDbalUtility(Connection $connection): WriterUtilityInterface
     {
-        //todo
+        if (self::$utility === null) {
+            self::$utility = new class($connection) implements WriterUtilityInterface
+            {
+                /**
+                 * @var Connection
+                 */
+                private $connection;
+                private $columns = [];
+                private $keys = [];
+
+                public function __construct(Connection $connection)
+                {
+                    $this->connection = $connection;
+                }
+
+                public function getColumns(string $table): array
+                {
+                    if (!isset($this->columns[$table])) {
+                        $this->columns[$table] = $this->connection->getSchemaManager()->listTableColumns($table);
+                    }
+                    return $this->columns[$table];
+                }
+
+                public function getUniqueKeys(string $table): array
+                {
+                    if (!isset($this->keys[$table])) {
+                        $allKeys = $this->connection->getSchemaManager()->listTableIndexes($table);
+                        $this->keys[$table] = array_filter($allKeys, function (Index $index) {
+                            return $index->isUnique();
+                        });
+                    }
+                    return $this->keys[$table];
+                }
+            };
+        }
+        return self::$utility;
     }
 }
