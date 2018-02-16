@@ -18,16 +18,11 @@ class ArrayWrite implements HandlerInterface
      * @var string
      */
     private $identifier;
-    /**
-     * @var null|WriteCallbackInterface
-     */
-    private $callback;
 
-    public function __construct(string $id, array &$localStorage, ?WriteCallbackInterface $callback)
+    public function __construct(string $id, array &$localStorage)
     {
         $this->identifier = $id;
         $this->localStorage = &$localStorage;
-        $this->callback = $callback;
     }
 
     /**
@@ -36,10 +31,6 @@ class ArrayWrite implements HandlerInterface
     public function handle(DataBagInterface $dataBag): DataBagInterface
     {
         $this->localStorage[] = $dataBag->toArray();
-
-        if ($this->callback) {
-            ($this->callback)(1, $dataBag);
-        }
 
         return $dataBag;
     }

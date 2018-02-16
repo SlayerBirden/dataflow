@@ -10,6 +10,7 @@ use Doctrine\DBAL\Schema\Schema;
 use PHPUnit\DbUnit\DataSet\IDataSet;
 use PHPUnit\DbUnit\TestCase;
 use SlayerBirden\DataFlow\DataBagInterface;
+use SlayerBirden\DataFlow\Emitter\BlackHole;
 use SlayerBirden\DataFlow\Handler\MapperCallbackInterface;
 use SlayerBirden\DataFlow\PipelineBuilder;
 use SlayerBirden\DataFlow\Plumber;
@@ -23,6 +24,7 @@ class DbalPipeTest extends TestCase
      */
     private $connection;
     private $pipeline;
+    private $emitter;
 
     protected function setUp(): void
     {
@@ -47,8 +49,8 @@ class DbalPipeTest extends TestCase
         });
 
         parent::setUp();
-
-        $this->pipeline = (new PipelineBuilder())
+        $this->emitter = new BlackHole();
+        $this->pipeline = (new PipelineBuilder($this->emitter))
             ->map('name', new class implements MapperCallbackInterface
             {
                 public function __invoke($value, ?DataBagInterface $dataBag)
@@ -112,7 +114,7 @@ class DbalPipeTest extends TestCase
                 'lastname' => 'Werk',
             ],
         ]);
-        (new Plumber($provider, $this->pipeline))->pour();
+        (new Plumber($provider, $this->pipeline, $this->emitter))->pour();
 
         $actual = $this->getConnection()->createQueryTable('heroes', 'SELECT * FROM `heroes`');
         $expected = $this->createArrayDataSet([

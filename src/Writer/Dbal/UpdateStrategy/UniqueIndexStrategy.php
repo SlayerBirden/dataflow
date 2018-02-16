@@ -38,9 +38,14 @@ class UniqueIndexStrategy implements UpdateStrategyInterface
                 if (isset($dataBag[$column])) {
                     $identifiers[$column] = $dataBag[$column];
                 } else {
+                    // if one of the columns is empty, this index can not be used
                     $identifiers = [];
                     break;
                 }
+            }
+            // If we have already found something to identify the record with, skip other keys
+            if (!empty($identifiers)) {
+                break;
             }
         }
         return $identifiers;

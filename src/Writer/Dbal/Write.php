@@ -6,9 +6,9 @@ namespace SlayerBirden\DataFlow\Writer\Dbal;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use SlayerBirden\DataFlow\DataBagInterface;
+use SlayerBirden\DataFlow\EmitterInterface;
 use SlayerBirden\DataFlow\HandlerInterface;
 use SlayerBirden\DataFlow\IdentificationTrait;
-use SlayerBirden\DataFlow\Writer\WriteCallbackInterface;
 
 class Write implements HandlerInterface
 {
@@ -26,7 +26,7 @@ class Write implements HandlerInterface
      */
     private $table;
     /**
-     * @var WriteCallbackInterface|null
+     * @var AutoIncrementCallbackInterface|null
      */
     private $callback;
     /**
@@ -37,6 +37,10 @@ class Write implements HandlerInterface
      * @var UpdateStrategyInterface
      */
     private $updateStrategy;
+    /**
+     * @var EmitterInterface
+     */
+    private $emitter;
 
     public function __construct(
         string $identifier,
@@ -44,7 +48,8 @@ class Write implements HandlerInterface
         string $table,
         WriterUtilityInterface $utility,
         UpdateStrategyInterface $updateStrategy,
-        ?WriteCallbackInterface $callback = null
+        EmitterInterface $emitter,
+        ?AutoIncrementCallbackInterface $callback = null
     ) {
         $this->identifier = $identifier;
         $this->connection = $connection;
@@ -52,6 +57,7 @@ class Write implements HandlerInterface
         $this->callback = $callback;
         $this->utility = $utility;
         $this->updateStrategy = $updateStrategy;
+        $this->emitter = $emitter;
     }
 
     /**
@@ -63,8 +69,12 @@ class Write implements HandlerInterface
     public function handle(DataBagInterface $dataBag): DataBagInterface
     {
         $columns = $this->utility->getColumns($this->table);
+        $hasAutoIncrement = false;
         $dataToInsert = [];
         foreach ($columns as $column) {
+            if (!$hasAutoIncrement && $column->getAutoincrement()) {
+                $hasAutoIncrement = true;
+            }
             if (isset($dataBag[$column->getName()])) {
                 $dataToInsert[$column->getName()] = $column->getType()->convertToDatabaseValue(
                     $dataBag[$column->getName()],
@@ -73,19 +83,19 @@ class Write implements HandlerInterface
             }
         }
         if ($this->recordExists($dataBag)) {
-            $inserted = $this->connection->update(
+            $this->connection->update(
                 $this->table,
                 $dataToInsert,
                 $this->updateStrategy->getRecordIdentifier($dataBag)
             );
+            $this->emitter->emit('record_update', $this->table, $dataBag);
         } else {
-            $inserted = $this->connection->insert($this->table, $dataToInsert);
-        }
-
-        // TODO log
-        if ($this->callback) {
-            $id = $this->connection->lastInsertId();
-            ($this->callback)($inserted, $dataBag, $id);
+            $this->connection->insert($this->table, $dataToInsert);
+            $this->emitter->emit('record_insert', $this->table, $dataBag);
+            if ($hasAutoIncrement && $this->callback) {
+                $id = $this->connection->lastInsertId();
+                ($this->callback)($id, $dataBag);
+            }
         }
 
         return $dataBag;

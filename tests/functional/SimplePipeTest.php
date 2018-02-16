@@ -5,6 +5,7 @@ namespace SlayerBirden\DataFlow\Test\Functional;
 
 use PHPUnit\Framework\TestCase;
 use SlayerBirden\DataFlow\DataBagInterface;
+use SlayerBirden\DataFlow\Emitter\BlackHole;
 use SlayerBirden\DataFlow\Handler\FilterCallbackInterface;
 use SlayerBirden\DataFlow\Handler\MapperCallbackInterface;
 use SlayerBirden\DataFlow\PipelineBuilder;
@@ -15,10 +16,12 @@ class SimplePipeTest extends TestCase
 {
     private $pipeline;
     private $storage = [];
+    private $emitter;
 
     protected function setUp()
     {
-        $this->pipeline = (new PipelineBuilder())
+        $this->emitter = new BlackHole();
+        $this->pipeline = (new PipelineBuilder($this->emitter))
             ->filter(new class implements FilterCallbackInterface
             {
                 public function __invoke(DataBagInterface $dataBag): bool
@@ -57,7 +60,7 @@ class SimplePipeTest extends TestCase
             ],
         ]);
 
-        (new Plumber($provider, $this->pipeline))->pour();
+        (new Plumber($provider, $this->pipeline, $this->emitter))->pour();
 
         $this->assertEquals([
             [

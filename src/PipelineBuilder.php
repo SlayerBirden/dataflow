@@ -10,10 +10,10 @@ use SlayerBirden\DataFlow\Handler\FilterCallbackInterface;
 use SlayerBirden\DataFlow\Handler\Mapper;
 use SlayerBirden\DataFlow\Handler\MapperCallbackInterface;
 use SlayerBirden\DataFlow\Writer\ArrayWrite;
+use SlayerBirden\DataFlow\Writer\Dbal\AutoIncrementCallbackInterface;
 use SlayerBirden\DataFlow\Writer\Dbal\Write;
 use SlayerBirden\DataFlow\Writer\Dbal\WriterUtilityInterface;
 use SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy\UniqueIndexStrategy;
-use SlayerBirden\DataFlow\Writer\WriteCallbackInterface;
 
 class PipelineBuilder implements PipelineBuilderInterface
 {
@@ -27,15 +27,27 @@ class PipelineBuilder implements PipelineBuilderInterface
     private static $utility;
 
     private $pipesCount = 0;
+    /**
+     * @var EmitterInterface
+     */
+    private $emitter;
 
-    public function __construct()
+    public function __construct(EmitterInterface $emitter)
     {
         $this->pipeline = new PipeLine();
+        $this->emitter = $emitter;
     }
 
-    public function addSection(HandlerInterface $handler): PipelineBuilder
+    /**
+     * Add arbitrary (not pre-defined) section to pipeline.
+     *
+     * @param HandlerInterface $handler
+     * @param int $priority
+     * @return PipelineBuilder
+     */
+    public function addSection(HandlerInterface $handler, int $priority = 0): PipelineBuilder
     {
-        $this->pipeline->insert($handler);
+        $this->pipeline->insert($handler, $priority);
         return $this;
     }
 
@@ -58,7 +70,7 @@ class PipelineBuilder implements PipelineBuilderInterface
     public function dbalWrite(
         string $table,
         Connection $connection,
-        ?WriteCallbackInterface $callback = null,
+        ?AutoIncrementCallbackInterface $callback = null,
         ?string $id = null
     ): PipelineBuilder {
         if (!$id) {
@@ -70,19 +82,19 @@ class PipelineBuilder implements PipelineBuilderInterface
             $table,
             $this->getDbalUtility($connection),
             (new UniqueIndexStrategy($table, $this->getDbalUtility($connection))),
+            $this->emitter,
             $callback
         ));
     }
 
     public function arrayWrite(
         array &$storage,
-        ?WriteCallbackInterface $callback = null,
         ?string $id = null
     ): PipelineBuilder {
         if (!$id) {
             $id = 'array-write' . $this->pipesCount++;
         }
-        return $this->addSection(new ArrayWrite($id, $storage, $callback));
+        return $this->addSection(new ArrayWrite($id, $storage));
     }
 
     public function getPipeline(): PipeLineInterface
@@ -120,7 +132,7 @@ class PipelineBuilder implements PipelineBuilderInterface
                     if (!isset($this->keys[$table])) {
                         $allKeys = $this->connection->getSchemaManager()->listTableIndexes($table);
                         $this->keys[$table] = array_filter($allKeys, function (Index $index) {
-                            return $index->isUnique();
+                            return $index->isUnique() || $index->isPrimary();
                         });
                     }
                     return $this->keys[$table];

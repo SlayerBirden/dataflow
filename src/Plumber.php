@@ -16,11 +16,16 @@ class Plumber
      * @var PipeLineInterface
      */
     private $pipeLine;
+    /**
+     * @var EmitterInterface
+     */
+    private $emitter;
 
-    public function __construct(ProviderInterface $source, PipeLineInterface $pipeLine)
+    public function __construct(ProviderInterface $source, PipeLineInterface $pipeLine, EmitterInterface $emitter)
     {
         $this->source = $source;
         $this->pipeLine = $pipeLine;
+        $this->emitter = $emitter;
     }
 
     /**
@@ -38,11 +43,11 @@ class Plumber
                         $this->pipeLine->next();
                     }
                 } catch (FlowTerminationException $exception) {
-                    // todo handle
+                    $this->emitter->emit('valve_closed', $exception->getIdentifier(), $dataBag);
                 }
             }
         } catch (EmptyException $exception) {
-            // todo handle
+            $this->emitter->emit('empty_cask');
         }
     }
 }
