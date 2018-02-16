@@ -18,7 +18,7 @@ use SlayerBirden\DataFlow\Writer\WriteCallbackInterface;
 class PipelineBuilder implements PipelineBuilderInterface
 {
     /**
-     * @var HandlerInterface[]
+     * @var PipeLineInterface
      */
     private $pipeline;
     /**
@@ -28,10 +28,14 @@ class PipelineBuilder implements PipelineBuilderInterface
 
     private $pipesCount = 0;
 
+    public function __construct()
+    {
+        $this->pipeline = new PipeLine();
+    }
+
     public function addSection(HandlerInterface $handler): PipelineBuilder
     {
-        // todo create pipeline object
-        $this->pipeline[] = $handler;
+        $this->pipeline->insert($handler);
         return $this;
     }
 
@@ -81,10 +85,7 @@ class PipelineBuilder implements PipelineBuilderInterface
         return $this->addSection(new ArrayWrite($id, $storage, $callback));
     }
 
-    /**
-     * @return HandlerInterface[]
-     */
-    public function getPipeline(): array
+    public function getPipeline(): PipeLineInterface
     {
         return $this->pipeline;
     }

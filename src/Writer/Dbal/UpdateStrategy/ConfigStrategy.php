@@ -15,7 +15,6 @@ class ConfigStrategy implements UpdateStrategyInterface
 
     public function __construct(array $fields)
     {
-        //todo make more real life config object
         $this->fields = $fields;
     }
 
@@ -28,13 +27,17 @@ class ConfigStrategy implements UpdateStrategyInterface
     public function getRecordIdentifier(DataBagInterface $dataBag): array
     {
         $ids = [];
-        foreach ($this->fields as $field) {
-            if (!isset($dataBag[$field])) {
-                throw new InvalidConfigException(
-                    sprintf('Identifier field %s is missing in the bag: %s.', $field, json_encode($dataBag))
-                );
+        foreach ($this->fields as $key => $value) {
+            if ($value === null) {
+                if (!isset($dataBag[$key])) {
+                    throw new InvalidConfigException(
+                        sprintf('Identifier field %s is missing in the bag: %s.', $key, json_encode($dataBag))
+                    );
+                }
+                $ids[$key] = $dataBag[$key];
+            } else {
+                $ids[$key] = $value;
             }
-            $ids[$field] = $dataBag[$field];
         }
 
         return $ids;

@@ -5,19 +5,14 @@ namespace SlayerBirden\DataFlow\Test\Functional;
 
 use PHPUnit\Framework\TestCase;
 use SlayerBirden\DataFlow\DataBagInterface;
-use SlayerBirden\DataFlow\Exception\FlowTerminationException;
 use SlayerBirden\DataFlow\Handler\FilterCallbackInterface;
 use SlayerBirden\DataFlow\Handler\MapperCallbackInterface;
-use SlayerBirden\DataFlow\HandlerInterface;
 use SlayerBirden\DataFlow\PipelineBuilder;
+use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\ArrayProvider;
-use SlayerBirden\DataFlow\Provider\EmptyException;
 
 class SimplePipeTest extends TestCase
 {
-    /**
-     * @var HandlerInterface[]
-     */
     private $pipeline;
     private $storage = [];
 
@@ -62,18 +57,7 @@ class SimplePipeTest extends TestCase
             ],
         ]);
 
-        try {
-            while ($dataBag = $provider->provide()) {
-                // pour
-                try {
-                    foreach ($this->pipeline as $handler) {
-                        $handler->handle($dataBag);
-                    }
-                } catch (FlowTerminationException $exception) {
-                }
-            }
-        } catch (EmptyException $exception) {
-        }
+        (new Plumber($provider, $this->pipeline))->pour();
 
         $this->assertEquals([
             [

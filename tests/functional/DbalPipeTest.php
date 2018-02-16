@@ -5,20 +5,15 @@ namespace SlayerBirden\DataFlow\Test\Functional;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDOConnection;
-use Doctrine\DBAL\Driver\PDOMySql\Driver;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Schema\Schema;
 use PHPUnit\DbUnit\DataSet\IDataSet;
-use PHPUnit\DbUnit\Operation\Factory;
-use PHPUnit\DbUnit\Operation\Operation;
 use PHPUnit\DbUnit\TestCase;
 use SlayerBirden\DataFlow\DataBagInterface;
-use SlayerBirden\DataFlow\Exception\FlowTerminationException;
 use SlayerBirden\DataFlow\Handler\MapperCallbackInterface;
-use SlayerBirden\DataFlow\HandlerInterface;
 use SlayerBirden\DataFlow\PipelineBuilder;
+use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\ArrayProvider;
-use SlayerBirden\DataFlow\Provider\EmptyException;
 use SlayerBirden\DataFlow\Test\Functional\Exception\ConnectionException;
 
 class DbalPipeTest extends TestCase
@@ -27,9 +22,6 @@ class DbalPipeTest extends TestCase
      * @var Connection
      */
     private $connection;
-    /**
-     * @var HandlerInterface[]
-     */
     private $pipeline;
 
     protected function setUp(): void
@@ -120,19 +112,7 @@ class DbalPipeTest extends TestCase
                 'lastname' => 'Werk',
             ],
         ]);
-
-        try {
-            while ($dataBag = $provider->provide()) {
-                // pour
-                try {
-                    foreach ($this->pipeline as $handler) {
-                        $handler->handle($dataBag);
-                    }
-                } catch (FlowTerminationException $exception) {
-                }
-            }
-        } catch (EmptyException $exception) {
-        }
+        (new Plumber($provider, $this->pipeline))->pour();
 
         $actual = $this->getConnection()->createQueryTable('heroes', 'SELECT * FROM `heroes`');
         $expected = $this->createArrayDataSet([
