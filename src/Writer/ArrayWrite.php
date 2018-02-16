@@ -5,9 +5,11 @@ namespace SlayerBirden\DataFlow\Writer;
 
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\HandlerInterface;
+use SlayerBirden\DataFlow\IdentificationTrait;
 
 class ArrayWrite implements HandlerInterface
 {
+    use IdentificationTrait;
     /**
      * @var array
      */
@@ -15,7 +17,7 @@ class ArrayWrite implements HandlerInterface
     /**
      * @var string
      */
-    private $id;
+    private $identifier;
     /**
      * @var null|WriteCallbackInterface
      */
@@ -23,7 +25,7 @@ class ArrayWrite implements HandlerInterface
 
     public function __construct(string $id, array &$localStorage, ?WriteCallbackInterface $callback)
     {
-        $this->id = $id;
+        $this->identifier = $id;
         $this->localStorage = &$localStorage;
         $this->callback = $callback;
     }
@@ -40,13 +42,5 @@ class ArrayWrite implements HandlerInterface
         }
 
         return $dataBag;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getIdentifier(): string
-    {
-        return $this->id;
     }
 }

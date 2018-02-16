@@ -7,10 +7,12 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\HandlerInterface;
+use SlayerBirden\DataFlow\IdentificationTrait;
 use SlayerBirden\DataFlow\Writer\WriteCallbackInterface;
 
 class Write implements HandlerInterface
 {
+    use IdentificationTrait;
     /**
      * @var string
      */
@@ -116,13 +118,5 @@ class Write implements HandlerInterface
             return $count === 1;
         }
         return false;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getIdentifier(): string
-    {
-        return $this->identifier;
     }
 }

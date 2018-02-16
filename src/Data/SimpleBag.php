@@ -20,11 +20,6 @@ class SimpleBag extends \ArrayObject implements DataBagInterface
      */
     public function toArray(): array
     {
-        $dict = [];
-        foreach ($this as $key => $val) {
-            $dict[$key] = (string)$val;
-        }
-
-        return $dict;
+        return $this->getArrayCopy();
     }
 }

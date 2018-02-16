@@ -5,9 +5,11 @@ namespace SlayerBirden\DataFlow\Handler;
 
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\HandlerInterface;
+use SlayerBirden\DataFlow\IdentificationTrait;
 
 class Mapper implements HandlerInterface
 {
+    use IdentificationTrait;
     /**
      * @var string
      */
@@ -39,13 +41,5 @@ class Mapper implements HandlerInterface
         $dataBag[$this->field] = ($this->callback)($dataBag[$this->field] ?? null, $dataBag);
 
         return $dataBag;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getIdentifier(): string
-    {
-        return $this->identifier;
     }
 }

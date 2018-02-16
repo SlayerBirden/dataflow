@@ -5,21 +5,24 @@ namespace SlayerBirden\DataFlow\Provider;
 
 use SlayerBirden\DataFlow\Data\SimpleBag;
 use SlayerBirden\DataFlow\DataBagInterface;
+use SlayerBirden\DataFlow\IdentificationTrait;
 use SlayerBirden\DataFlow\ProviderInterface;
 
 class ArrayProvider implements ProviderInterface
 {
+    use IdentificationTrait;
+
     private $data = [];
     private $pointer = 0;
     /**
      * @var string
      */
-    private $id;
+    private $identifier;
 
     public function __construct(string $id, array $data)
     {
         $this->data = $data;
-        $this->id = $id;
+        $this->identifier = $id;
     }
 
     /**
@@ -31,13 +34,5 @@ class ArrayProvider implements ProviderInterface
             return new SimpleBag($this->data[$this->pointer++]);
         }
         throw new EmptyException(sprintf('Provider %s is empty.', $this->getIdentifier()));
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getIdentifier(): string
-    {
-        return $this->id;
     }
 }

@@ -6,9 +6,11 @@ namespace SlayerBirden\DataFlow\Handler;
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\Exception\FlowTerminationException;
 use SlayerBirden\DataFlow\HandlerInterface;
+use SlayerBirden\DataFlow\IdentificationTrait;
 
 class Filter implements HandlerInterface
 {
+    use IdentificationTrait;
     /**
      * @var FilterCallbackInterface
      */
@@ -43,13 +45,5 @@ class Filter implements HandlerInterface
         }
 
         return $dataBag;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getIdentifier(): string
-    {
-        return $this->identifier;
     }
 }
