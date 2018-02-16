@@ -64,7 +64,6 @@ class Write implements HandlerInterface
     {
         $columns = $this->utility->getColumns($this->table);
         $dataToInsert = [];
-        $inserted = 0;
         foreach ($columns as $column) {
             if (isset($dataBag[$column->getName()])) {
                 $dataToInsert[$column->getName()] = $column->getType()->convertToDatabaseValue(

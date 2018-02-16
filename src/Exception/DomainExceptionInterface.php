@@ -3,6 +3,6 @@ declare(strict_types=1);
 
 namespace SlayerBirden\DataFlow\Exception;
 
-class DomainException extends \DomainException
+interface DomainExceptionInterface extends \Throwable
 {
 }
