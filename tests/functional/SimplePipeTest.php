@@ -31,7 +31,7 @@ class SimplePipeTest extends TestCase
             })
             ->map('name', new class implements MapperCallbackInterface
             {
-                public function __invoke($value, ?DataBagInterface $dataBag)
+                public function __invoke($value, ?DataBagInterface $dataBag = null)
                 {
                     return $dataBag['firstname'] . ' ' . $dataBag['lastname'];
                 }

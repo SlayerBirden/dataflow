@@ -17,8 +17,9 @@ use SlayerBirden\DataFlow\PipelineBuilder;
 use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\ArrayProvider;
 use SlayerBirden\DataFlow\Test\Functional\Exception\ConnectionException;
+use SlayerBirden\DataFlow\Writer\Dbal\AutoIncrementCallbackInterface;
 
-class DbalPipeTest extends TestCase
+class DbalPipeMultilevelTest extends TestCase
 {
     /**
      * @var Connection
@@ -32,14 +33,26 @@ class DbalPipeTest extends TestCase
         $params = require __DIR__ . '/config/db-config.php';
         $this->connection = DriverManager::getConnection($params);
 
-        // create Table
         $schema = new Schema();
+
+        // create teams Table
+        $table = $schema->createTable('teams');
+        $table->addColumn('id', 'integer', [
+            'autoincrement' => true,
+        ]);
+        $table->addColumn('name', 'string');
+        $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['name']);
+
+        // create heroes Table
         $table = $schema->createTable('heroes');
         $table->addColumn('id', 'integer', [
             'autoincrement' => true,
         ]);
         $table->addColumn('name', 'string');
         $table->addColumn('code', 'string');
+        $table->addColumn('team_id', 'integer');
+        $table->addForeignKeyConstraint('teams', ['team_id'], ['id']);
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['code']);
 
@@ -52,11 +65,32 @@ class DbalPipeTest extends TestCase
         parent::setUp();
         $this->emitter = new BlackHole();
         $this->pipeline = (new PipelineBuilder($this->emitter))
+            ->map('hero_name', new class implements MapperCallbackInterface
+            {
+                public function __invoke($value, ?DataBagInterface $dataBag = null)
+                {
+                    return $dataBag['name'];
+                }
+            })
             ->map('name', new class implements MapperCallbackInterface
             {
                 public function __invoke($value, ?DataBagInterface $dataBag = null)
                 {
-                    return $dataBag['firstname'] . ' ' . $dataBag['lastname'];
+                    return $dataBag['team'];
+                }
+            })
+            ->dbalWrite('teams', $this->connection, new class implements AutoIncrementCallbackInterface
+            {
+                public function __invoke(int $id, DataBagInterface $dataBag)
+                {
+                    $dataBag['team_id'] = $id;
+                }
+            })
+            ->map('name', new class implements MapperCallbackInterface
+            {
+                public function __invoke($value, ?DataBagInterface $dataBag = null)
+                {
+                    return $dataBag['hero_name'];
                 }
             })
             ->dbalWrite('heroes', $this->connection)
@@ -92,57 +126,67 @@ class DbalPipeTest extends TestCase
     {
         return $this->createArrayDataSet([
             'heroes' => [
-                [
-                    'id' => 1,
-                    'name' => 'Spiderman',
-                    'code' => 'spider-man',
-                ],
             ],
         ]);
     }
 
-    public function testDbSimplePipeFlow()
+    public function testDbMultiLevelPipeFlow()
     {
         $provider = new ArrayProvider('heroes', [
             [
-                'code' => 'super-man',
-                'firstname' => 'Clark',
-                'lastname' => 'Kent',
-            ],
-            [
+                'name' => 'Spiderman',
                 'code' => 'spider-man',
-                'firstname' => 'Peter',
-                'lastname' => 'Parker',
+                'team' => 'Avengers',
             ],
             [
-                'code' => 'clockwerk',
-                'firstname' => 'Clock',
-                'lastname' => 'Werk',
+                'name' => 'Hulk',
+                'code' => 'hulk',
+                'team' => 'Avengers',
+            ],
+            [
+                'name' => 'Super Man',
+                'code' => 'superman',
+                'team' => 'Justice League',
             ],
         ]);
         (new Plumber($provider, $this->pipeline, $this->emitter))->pour();
 
-        $actual = $this->getConnection()->createQueryTable('heroes', 'SELECT * FROM `heroes`');
+        $actualHeroes = $this->getConnection()->createQueryTable('heroes', 'SELECT * FROM `heroes`');
+        $actualTeams = $this->getConnection()->createQueryTable('teams', 'SELECT * FROM `teams`');
         $expected = $this->createArrayDataSet([
             'heroes' => [
                 [
                     'id' => 1,
-                    'name' => 'Peter Parker',
+                    'name' => 'Spiderman',
                     'code' => 'spider-man',
+                    'team_id' => 1,
                 ],
                 [
                     'id' => 2,
-                    'name' => 'Clark Kent',
-                    'code' => 'super-man',
+                    'name' => 'Hulk',
+                    'code' => 'hulk',
+                    'team_id' => 1,
                 ],
                 [
                     'id' => 3,
-                    'name' => 'Clock Werk',
-                    'code' => 'clockwerk',
+                    'name' => 'Super Man',
+                    'code' => 'superman',
+                    'team_id' => 2,
                 ],
-            ]
+            ],
+            'teams' => [
+                [
+                    'id' => 1,
+                    'name' => 'Avengers',
+                ],
+                [
+                    'id' => 2,
+                    'name' => 'Justice League',
+                ],
+            ],
         ]);
 
-        $this->assertTablesEqual($expected->getTable('heroes'), $actual);
+        $this->assertTablesEqual($expected->getTable('teams'), $actualTeams);
+        $this->assertTablesEqual($expected->getTable('heroes'), $actualHeroes);
     }
 }

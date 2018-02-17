@@ -39,7 +39,7 @@ class Plumber
                     $this->pipeLine->rewind();
                     while ($this->pipeLine->valid()) {
                         $handler = $this->pipeLine->current();
-                        $handler->handle($dataBag);
+                        $dataBag = $handler->handle($dataBag);
                         $this->pipeLine->next();
                     }
                 } catch (FlowTerminationException $exception) {

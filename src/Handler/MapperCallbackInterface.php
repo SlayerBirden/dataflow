@@ -14,5 +14,5 @@ interface MapperCallbackInterface
      * @param DataBagInterface $dataBag|null
      * @return mixed
      */
-    public function __invoke($value, ?DataBagInterface $dataBag);
+    public function __invoke($value, ?DataBagInterface $dataBag = null);
 }

@@ -70,10 +70,12 @@ class Write implements HandlerInterface
     {
         $columns = $this->utility->getColumns($this->table);
         $hasAutoIncrement = false;
+        $autoIncrementColumn = '';
         $dataToInsert = [];
         foreach ($columns as $column) {
             if (!$hasAutoIncrement && $column->getAutoincrement()) {
                 $hasAutoIncrement = true;
+                $autoIncrementColumn = $column->getName();
             }
             if (isset($dataBag[$column->getName()])) {
                 $dataToInsert[$column->getName()] = $column->getType()->convertToDatabaseValue(
@@ -82,23 +84,54 @@ class Write implements HandlerInterface
                 );
             }
         }
+        $identifier = $this->updateStrategy->getRecordIdentifier($dataBag);
         if ($this->recordExists($dataBag)) {
             $this->connection->update(
                 $this->table,
                 $dataToInsert,
-                $this->updateStrategy->getRecordIdentifier($dataBag)
+                $identifier
             );
             $this->emitter->emit('record_update', $this->table, $dataBag);
+            if ($hasAutoIncrement && $this->callback) {
+                $id = $this->getRecordId($identifier, $autoIncrementColumn);
+
+                ($this->callback)($id, $dataBag);
+            }
         } else {
             $this->connection->insert($this->table, $dataToInsert);
             $this->emitter->emit('record_insert', $this->table, $dataBag);
             if ($hasAutoIncrement && $this->callback) {
-                $id = $this->connection->lastInsertId();
+                $id = (int)$this->connection->lastInsertId();
                 ($this->callback)($id, $dataBag);
             }
         }
 
         return $dataBag;
+    }
+
+    /**
+     * Get auto-increment field value of the record using given id.
+     *
+     * @param array $identifier
+     * @param string $autoIncrementColumn
+     * @return int
+     * @throws DBALException
+     */
+    public function getRecordId(array $identifier, string $autoIncrementColumn): int
+    {
+        if (isset($identifier[$autoIncrementColumn])) {
+            return (int)$identifier[$autoIncrementColumn];
+        }
+        $queryBuilder = $this->connection->createQueryBuilder();
+        $queryBuilder->select($autoIncrementColumn)
+            ->from($this->table)
+            ->setParameters($identifier);
+        foreach (array_keys($identifier) as $key) {
+            $queryBuilder->andWhere("$key = :$key");
+        }
+        $stmt = $this->connection->prepare($queryBuilder->getSQL());
+        $stmt->execute($identifier);
+        return (int)$stmt->fetchColumn();
     }
 
     /**
@@ -125,7 +158,7 @@ class Write implements HandlerInterface
             $count = (int)$stmt->fetchColumn();
             if ($count > 1) {
                 throw new InvalidIdentificationException(
-                    sprintf('Could not resolve 1 entry using given predicate: %s', json_encode($id))
+                    sprintf('Could not narrow results to 1 entry using given predicate: %s', json_encode($id))
                 );
             }
             return $count === 1;
