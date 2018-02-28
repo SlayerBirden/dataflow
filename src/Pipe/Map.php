@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace SlayerBirden\DataFlow\Handler;
+namespace SlayerBirden\DataFlow\Pipe;
 
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\PipeInterface;
 use SlayerBirden\DataFlow\IdentificationTrait;
 
-class Mapper implements PipeInterface
+class Map implements PipeInterface
 {
     use IdentificationTrait;
     /**

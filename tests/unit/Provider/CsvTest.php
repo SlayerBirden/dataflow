@@ -70,7 +70,7 @@ class CsvTest extends TestCase
         $cask = $csv->getCask();
         $actual = [];
         foreach ($cask as $row) {
-            $actual[] = $row;
+            $actual[] = $row->toArray();
         }
 
         $this->assertEquals([
@@ -108,7 +108,7 @@ class CsvTest extends TestCase
 
         $actual = [];
         foreach ($cask as $row) {
-            $actual[] = $row;
+            $actual[] = $row->toArray();
         }
 
         $this->assertEquals([

@@ -7,38 +7,49 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDOConnection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Schema\Schema;
-use PHPUnit\DbUnit\DataSet\IDataSet;
 use PHPUnit\DbUnit\Operation\Factory;
 use PHPUnit\DbUnit\TestCase;
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\Emitter\BlackHole;
+use SlayerBirden\DataFlow\Pipe\FilterCallbackInterface;
 use SlayerBirden\DataFlow\Pipe\MapperCallbackInterface;
 use SlayerBirden\DataFlow\PipelineBuilder;
 use SlayerBirden\DataFlow\Plumber;
-use SlayerBirden\DataFlow\Provider\ArrayProvider;
+use SlayerBirden\DataFlow\Provider\Dbal;
 use SlayerBirden\DataFlow\Test\Functional\Exception\ConnectionException;
 
-class DbalPipeTest extends TestCase
+class DbalMigrationTest extends TestCase
 {
     /**
      * @var Connection
      */
     private $connection;
-    private $pipeline;
     private $emitter;
+    private $pipeline;
 
     protected function setUp(): void
     {
         $params = require __DIR__ . '/config/db-config.php';
         $this->connection = DriverManager::getConnection($params);
 
-        // create Table
         $schema = new Schema();
+        // create Heroes Table
         $table = $schema->createTable('heroes');
         $table->addColumn('id', 'integer', [
             'autoincrement' => true,
         ]);
         $table->addColumn('name', 'string');
+        $table->addColumn('code', 'string');
+        $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['code']);
+
+        // create Users Table
+        $table = $schema->createTable('users');
+        $table->addColumn('id', 'integer', [
+            'autoincrement' => true,
+        ]);
+        $table->addColumn('first', 'string');
+        $table->addColumn('last', 'string');
         $table->addColumn('code', 'string');
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['code']);
@@ -52,26 +63,27 @@ class DbalPipeTest extends TestCase
         parent::setUp();
         $this->emitter = new BlackHole();
         $this->pipeline = (new PipelineBuilder($this->emitter))
+            ->delete(['id'])
+            ->filter(new class implements FilterCallbackInterface
+            {
+                public function __invoke(DataBagInterface $dataBag): bool
+                {
+                    return !empty($dataBag['code']);
+                }
+            })
             ->map('name', new class implements MapperCallbackInterface
             {
                 public function __invoke($value, ?DataBagInterface $dataBag = null)
                 {
-                    return $dataBag['firstname'] . ' ' . $dataBag['lastname'];
+                    return $dataBag['first'] . ' ' . $dataBag['last'];
                 }
             })
             ->dbalWrite('heroes', $this->connection)
             ->getPipeline();
     }
 
-    protected function getTearDownOperation()
-    {
-        return Factory::TRUNCATE();
-    }
-
     /**
-     * Returns the test database connection.
-     *
-     * @return \PHPUnit\DbUnit\Database\Connection
+     * @inheritdoc
      */
     protected function getConnection()
     {
@@ -83,43 +95,39 @@ class DbalPipeTest extends TestCase
         throw new ConnectionException('Could not get PDO object.');
     }
 
+    protected function getTearDownOperation()
+    {
+        return Factory::TRUNCATE();
+    }
+
     /**
-     * Returns the test dataset.
-     *
-     * @return IDataSet
+     * @inheritdoc
      */
     protected function getDataSet()
     {
         return $this->createArrayDataSet([
-            'heroes' => [
+            'users' => [
                 [
                     'id' => 1,
-                    'name' => 'Spiderman',
-                    'code' => 'spider-man',
+                    'first' => 'John',
+                    'last' => 'Doe',
+                    'code' => ''
+                ],
+                [
+                    'id' => 2,
+                    'first' => 'Peter',
+                    'last' => 'Parker',
+                    'code' => 'spiderman'
                 ],
             ],
+            'heroes' => [],
         ]);
     }
 
     public function testDbSimplePipeFlow()
     {
-        $provider = new ArrayProvider('heroes', [
-            [
-                'code' => 'super-man',
-                'firstname' => 'Clark',
-                'lastname' => 'Kent',
-            ],
-            [
-                'code' => 'spider-man',
-                'firstname' => 'Peter',
-                'lastname' => 'Parker',
-            ],
-            [
-                'code' => 'clockwerk',
-                'firstname' => 'Clock',
-                'lastname' => 'Werk',
-            ],
-        ]);
+        $provider = new Dbal('db_users', $this->connection, 'users');
+
         (new Plumber($provider, $this->pipeline, $this->emitter))->pour();
 
         $actual = $this->getConnection()->createQueryTable('heroes', 'SELECT * FROM `heroes`');
@@ -128,21 +136,18 @@ class DbalPipeTest extends TestCase
                 [
                     'id' => 1,
                     'name' => 'Peter Parker',
-                    'code' => 'spider-man',
-                ],
-                [
-                    'id' => 2,
-                    'name' => 'Clark Kent',
-                    'code' => 'super-man',
-                ],
-                [
-                    'id' => 3,
-                    'name' => 'Clock Werk',
-                    'code' => 'clockwerk',
+                    'code' => 'spiderman',
                 ],
             ]
         ]);
 
         $this->assertTablesEqual($expected->getTable('heroes'), $actual);
+    }
+
+    public function testGetSize()
+    {
+        $provider = new Dbal('db_users', $this->connection, 'users');
+
+        $this->assertSame(2, $provider->getEstimatedSize());
     }
 }

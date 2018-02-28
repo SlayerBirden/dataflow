@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace SlayerBirden\DataFlow\Provider;
 
+use SlayerBirden\DataFlow\Data\SimpleBag;
 use SlayerBirden\DataFlow\IdentificationTrait;
 use SlayerBirden\DataFlow\Provider\Exception\FileDoesNotExist;
 use SlayerBirden\DataFlow\Provider\Exception\HeaderInvalid;
@@ -82,7 +83,7 @@ class Csv implements ProviderInterface
                     )
                 );
             }
-            yield array_combine($this->header, $row);
+            yield new SimpleBag(array_combine($this->header, $row));
             $this->file->next();
         }
     }

@@ -12,7 +12,6 @@ use PHPUnit\DbUnit\Operation\Factory;
 use PHPUnit\DbUnit\TestCase;
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\Emitter\BlackHole;
-use SlayerBirden\DataFlow\Handler\MapperCallbackInterface;
 use SlayerBirden\DataFlow\PipelineBuilder;
 use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\ArrayProvider;
@@ -65,20 +64,8 @@ class DbalPipeMultilevelTest extends TestCase
         parent::setUp();
         $this->emitter = new BlackHole();
         $this->pipeline = (new PipelineBuilder($this->emitter))
-            ->map('hero_name', new class implements MapperCallbackInterface
-            {
-                public function __invoke($value, ?DataBagInterface $dataBag = null)
-                {
-                    return $dataBag['name'];
-                }
-            })
-            ->map('name', new class implements MapperCallbackInterface
-            {
-                public function __invoke($value, ?DataBagInterface $dataBag = null)
-                {
-                    return $dataBag['team'];
-                }
-            })
+            ->cp('name', 'hero_name') // copy to tmp hero_name
+            ->cp('team', 'name') // copy team to name
             ->dbalWrite('teams', $this->connection, new class implements AutoIncrementCallbackInterface
             {
                 public function __invoke(int $id, DataBagInterface $dataBag)
@@ -86,13 +73,8 @@ class DbalPipeMultilevelTest extends TestCase
                     $dataBag['team_id'] = $id;
                 }
             })
-            ->map('name', new class implements MapperCallbackInterface
-            {
-                public function __invoke($value, ?DataBagInterface $dataBag = null)
-                {
-                    return $dataBag['hero_name'];
-                }
-            })
+            ->cp('hero_name', 'name') // copy hero_name back to name
+            ->delete(['hero_name', 'team'])
             ->dbalWrite('heroes', $this->connection)
             ->getPipeline();
     }
@@ -125,8 +107,8 @@ class DbalPipeMultilevelTest extends TestCase
     protected function getDataSet()
     {
         return $this->createArrayDataSet([
-            'heroes' => [
-            ],
+            'heroes' => [],
+            'teams' => [],
         ]);
     }
 

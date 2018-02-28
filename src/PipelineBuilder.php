@@ -5,10 +5,13 @@ namespace SlayerBirden\DataFlow;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Index;
-use SlayerBirden\DataFlow\Handler\Filter;
-use SlayerBirden\DataFlow\Handler\FilterCallbackInterface;
-use SlayerBirden\DataFlow\Handler\Mapper;
-use SlayerBirden\DataFlow\Handler\MapperCallbackInterface;
+use SlayerBirden\DataFlow\Pipe\Copy;
+use SlayerBirden\DataFlow\Pipe\Delete;
+use SlayerBirden\DataFlow\Pipe\Filter;
+use SlayerBirden\DataFlow\Pipe\FilterCallbackInterface;
+use SlayerBirden\DataFlow\Pipe\Map;
+use SlayerBirden\DataFlow\Pipe\MapperCallbackInterface;
+use SlayerBirden\DataFlow\Pipe\Swap;
 use SlayerBirden\DataFlow\Writer\ArrayWrite;
 use SlayerBirden\DataFlow\Writer\Dbal\AutoIncrementCallbackInterface;
 use SlayerBirden\DataFlow\Writer\Dbal\Write;
@@ -24,7 +27,7 @@ class PipelineBuilder implements PipelineBuilderInterface
     /**
      * @var WriterUtilityInterface
      */
-    private static $utility;
+    private $utility;
 
     private $pipesCount = 0;
     /**
@@ -56,15 +59,39 @@ class PipelineBuilder implements PipelineBuilderInterface
         if (!$id) {
             $id = 'mapper' . $this->pipesCount++ . '-' . $field;
         }
-        return $this->addSection(new Mapper($id, $field, $callback));
+        return $this->addSection(new Map($id, $field, $callback));
     }
 
     public function filter(FilterCallbackInterface $callback, ?string $id = null): PipelineBuilder
     {
         if (!$id) {
-            $id = 'filter' . $this->pipesCount++ . '-' . md5(get_class($callback));
+            $id = 'filter' . $this->pipesCount++ . '-' . get_class($callback);
         }
         return $this->addSection(new Filter($id, $callback));
+    }
+
+    public function delete(array $names, ?string $id = null): PipelineBuilder
+    {
+        if (!$id) {
+            $id = 'delete' . $this->pipesCount++ . '-' . json_encode($names);
+        }
+        return $this->addSection(new Delete($id, ...$names));
+    }
+
+    public function swap(string $first, string $second, ?string $id = null): PipelineBuilder
+    {
+        if (!$id) {
+            $id = 'swap' . $this->pipesCount++ . '-' . $first . '-' . $second;
+        }
+        return $this->addSection(new Swap($id, $first, $second));
+    }
+
+    public function cp(string $from, string $to, ?string $id = null): PipelineBuilder
+    {
+        if (!$id) {
+            $id = 'copy' . $this->pipesCount++ . '-' . $from . '-' . $to;
+        }
+        return $this->addSection(new Copy($id, $from, $to));
     }
 
     public function dbalWrite(
@@ -102,10 +129,10 @@ class PipelineBuilder implements PipelineBuilderInterface
         return $this->pipeline;
     }
 
-    public static function getDbalUtility(Connection $connection): WriterUtilityInterface
+    public function getDbalUtility(Connection $connection): WriterUtilityInterface
     {
-        if (self::$utility === null) {
-            self::$utility = new class($connection) implements WriterUtilityInterface
+        if ($this->utility === null) {
+            $this->utility = new class($connection) implements WriterUtilityInterface
             {
                 /**
                  * @var Connection
@@ -139,6 +166,6 @@ class PipelineBuilder implements PipelineBuilderInterface
                 }
             };
         }
-        return self::$utility;
+        return $this->utility;
     }
 }
