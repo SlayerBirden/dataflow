@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace SlayerBirden\DataFlow\Writer;
 
 use SlayerBirden\DataFlow\DataBagInterface;
-use SlayerBirden\DataFlow\HandlerInterface;
+use SlayerBirden\DataFlow\PipeInterface;
 use SlayerBirden\DataFlow\IdentificationTrait;
 
-class ArrayWrite implements HandlerInterface
+class ArrayWrite implements PipeInterface
 {
     use IdentificationTrait;
     /**
@@ -28,7 +28,7 @@ class ArrayWrite implements HandlerInterface
     /**
      * @inheritdoc
      */
-    public function handle(DataBagInterface $dataBag): DataBagInterface
+    public function pass(DataBagInterface $dataBag): DataBagInterface
     {
         $this->localStorage[] = $dataBag->toArray();
 

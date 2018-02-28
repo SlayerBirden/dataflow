@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace SlayerBirden\DataFlow;
 
 use SlayerBirden\DataFlow\Exception\FlowTerminationException;
-use SlayerBirden\DataFlow\Provider\EmptyException;
 
 class Plumber
 {
@@ -39,7 +38,7 @@ class Plumber
                 $this->pipeLine->rewind();
                 while ($this->pipeLine->valid()) {
                     $handler = $this->pipeLine->current();
-                    $dataBag = $handler->handle($dataBag);
+                    $dataBag = $handler->pass($dataBag);
                     $this->pipeLine->next();
                 }
             } catch (FlowTerminationException $exception) {

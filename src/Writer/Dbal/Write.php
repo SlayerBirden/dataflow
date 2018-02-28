@@ -7,10 +7,10 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\EmitterInterface;
-use SlayerBirden\DataFlow\HandlerInterface;
+use SlayerBirden\DataFlow\PipeInterface;
 use SlayerBirden\DataFlow\IdentificationTrait;
 
-class Write implements HandlerInterface
+class Write implements PipeInterface
 {
     use IdentificationTrait;
     /**
@@ -66,7 +66,7 @@ class Write implements HandlerInterface
      *
      * {@inheritdoc}
      */
-    public function handle(DataBagInterface $dataBag): DataBagInterface
+    public function pass(DataBagInterface $dataBag): DataBagInterface
     {
         $columns = $this->utility->getColumns($this->table);
         $hasAutoIncrement = false;

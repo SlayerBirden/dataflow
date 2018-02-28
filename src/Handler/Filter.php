@@ -5,10 +5,10 @@ namespace SlayerBirden\DataFlow\Handler;
 
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\Exception\FlowTerminationException;
-use SlayerBirden\DataFlow\HandlerInterface;
+use SlayerBirden\DataFlow\PipeInterface;
 use SlayerBirden\DataFlow\IdentificationTrait;
 
-class Filter implements HandlerInterface
+class Filter implements PipeInterface
 {
     use IdentificationTrait;
     /**
@@ -32,7 +32,7 @@ class Filter implements HandlerInterface
      *
      * {@inheritdoc}
      */
-    public function handle(DataBagInterface $dataBag): DataBagInterface
+    public function pass(DataBagInterface $dataBag): DataBagInterface
     {
         if (!($this->callback)($dataBag)) {
             throw new FlowTerminationException(

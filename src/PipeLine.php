@@ -9,12 +9,12 @@ class PipeLine implements PipeLineInterface, \Countable
     private $pointer = 0;
     private $queueOrder = PHP_INT_MAX;
 
-    public function current(): HandlerInterface
+    public function current(): PipeInterface
     {
         return $this->queue[$this->pointer]['item'];
     }
 
-    public function insert(HandlerInterface $handler, int $priority = 0): void
+    public function insert(PipeInterface $handler, int $priority = 0): void
     {
         $this->queue[] = [
             'item' => $handler,

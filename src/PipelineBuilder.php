@@ -41,11 +41,11 @@ class PipelineBuilder implements PipelineBuilderInterface
     /**
      * Add arbitrary (not pre-defined) section to pipeline.
      *
-     * @param HandlerInterface $handler
+     * @param PipeInterface $handler
      * @param int $priority
      * @return PipelineBuilder
      */
-    public function addSection(HandlerInterface $handler, int $priority = 0): PipelineBuilder
+    public function addSection(PipeInterface $handler, int $priority = 0): PipelineBuilder
     {
         $this->pipeline->insert($handler, $priority);
         return $this;

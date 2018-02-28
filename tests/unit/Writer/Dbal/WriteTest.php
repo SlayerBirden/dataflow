@@ -52,7 +52,7 @@ class WriteTest extends TestCase
         $this->strategy->getRecordIdentifier(Argument::any())->willReturn([]);
         $this->emitter->emit(Argument::exact('record_insert'), Argument::any(), Argument::any())->shouldBeCalled();
 
-        $this->write->handle(new SimpleBag([]));
+        $this->write->pass(new SimpleBag([]));
     }
 
     /**
@@ -79,6 +79,6 @@ class WriteTest extends TestCase
         $this->connection->createQueryBuilder()->willReturn($builder->reveal());
         $this->connection->prepare(Argument::any())->willReturn($statement->reveal());
 
-        $this->write->handle(new SimpleBag([]));
+        $this->write->pass(new SimpleBag([]));
     }
 }

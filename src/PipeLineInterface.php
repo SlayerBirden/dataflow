@@ -5,9 +5,9 @@ namespace SlayerBirden\DataFlow;
 
 interface PipeLineInterface
 {
-    public function current(): HandlerInterface;
+    public function current(): PipeInterface;
 
-    public function insert(HandlerInterface $handler, int $priority = 0): void;
+    public function insert(PipeInterface $handler, int $priority = 0): void;
 
     public function next(): void;
 

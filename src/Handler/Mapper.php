@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace SlayerBirden\DataFlow\Handler;
 
 use SlayerBirden\DataFlow\DataBagInterface;
-use SlayerBirden\DataFlow\HandlerInterface;
+use SlayerBirden\DataFlow\PipeInterface;
 use SlayerBirden\DataFlow\IdentificationTrait;
 
-class Mapper implements HandlerInterface
+class Mapper implements PipeInterface
 {
     use IdentificationTrait;
     /**
@@ -36,7 +36,7 @@ class Mapper implements HandlerInterface
      *
      * {@inheritdoc}
      */
-    public function handle(DataBagInterface $dataBag): DataBagInterface
+    public function pass(DataBagInterface $dataBag): DataBagInterface
     {
         $dataBag[$this->field] = ($this->callback)($dataBag[$this->field] ?? null, $dataBag);
 

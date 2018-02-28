@@ -20,9 +20,9 @@ class PipeLineTest extends TestCase
 
     public function testCount()
     {
-        $this->pipeline->insert(new class implements HandlerInterface
+        $this->pipeline->insert(new class implements PipeInterface
         {
-            public function handle(DataBagInterface $dataBag): DataBagInterface
+            public function pass(DataBagInterface $dataBag): DataBagInterface
             {
                 return new SimpleBag();
             }
@@ -33,9 +33,9 @@ class PipeLineTest extends TestCase
             }
         }, 0);
 
-        $this->pipeline->insert(new class implements HandlerInterface
+        $this->pipeline->insert(new class implements PipeInterface
         {
-            public function handle(DataBagInterface $dataBag): DataBagInterface
+            public function pass(DataBagInterface $dataBag): DataBagInterface
             {
                 return new SimpleBag();
             }
@@ -51,9 +51,9 @@ class PipeLineTest extends TestCase
 
     public function testOrder()
     {
-        $this->pipeline->insert(new class implements HandlerInterface
+        $this->pipeline->insert(new class implements PipeInterface
         {
-            public function handle(DataBagInterface $dataBag): DataBagInterface
+            public function pass(DataBagInterface $dataBag): DataBagInterface
             {
                 return new SimpleBag();
             }
@@ -64,9 +64,9 @@ class PipeLineTest extends TestCase
             }
         }, 0);
 
-        $this->pipeline->insert(new class implements HandlerInterface
+        $this->pipeline->insert(new class implements PipeInterface
         {
-            public function handle(DataBagInterface $dataBag): DataBagInterface
+            public function pass(DataBagInterface $dataBag): DataBagInterface
             {
                 return new SimpleBag();
             }
@@ -83,9 +83,9 @@ class PipeLineTest extends TestCase
 
     public function testRewind()
     {
-        $this->pipeline->insert(new class implements HandlerInterface
+        $this->pipeline->insert(new class implements PipeInterface
         {
-            public function handle(DataBagInterface $dataBag): DataBagInterface
+            public function pass(DataBagInterface $dataBag): DataBagInterface
             {
                 return new SimpleBag();
             }
@@ -96,9 +96,9 @@ class PipeLineTest extends TestCase
             }
         }, 0);
 
-        $this->pipeline->insert(new class implements HandlerInterface
+        $this->pipeline->insert(new class implements PipeInterface
         {
-            public function handle(DataBagInterface $dataBag): DataBagInterface
+            public function pass(DataBagInterface $dataBag): DataBagInterface
             {
                 return new SimpleBag();
             }
