@@ -1,0 +1,24 @@
+language: php
+
+php:
+  - "7.2"
+  - "7.1"
+
+install: composer install
+
+before_script:
+  - mysql -e 'create database dataflow;'
+  - cp -f tests/functional/config/Db/db-config.travis.php tests/functional/config/Db/db-config.php
+
+script:
+  - vendor/bin/phpunit --report-useless-tests --coverage-clover ./coverage.clover
+
+after_script:
+  - wget https://scrutinizer-ci.com/ocular.phar
+  - php ocular.phar code-coverage:upload --format=php-clover ./coverage.clover
+
+notifications:
+  email: true
+
+matrix:
+  fast_finish: true
