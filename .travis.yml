@@ -11,7 +11,7 @@ before_script:
   - cp -f tests/functional/config/db-config.travis.php tests/functional/config/db-config.php
 
 script:
-  - vendor/bin/phpunit --report-useless-tests --coverage-clover ./coverage.clover
+  - vendor/bin/phpunit --coverage-clover ./coverage.clover
 
 after_script:
   - wget https://scrutinizer-ci.com/ocular.phar
