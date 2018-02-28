@@ -41,6 +41,10 @@ class Write implements PipeInterface
      * @var EmitterInterface
      */
     private $emitter;
+    /**
+     * @var string|null
+     */
+    private $autoIncrementColumn;
 
     public function __construct(
         string $identifier,
@@ -68,15 +72,54 @@ class Write implements PipeInterface
      */
     public function pass(DataBagInterface $dataBag): DataBagInterface
     {
+        $dataToInsert = $this->getDataToInsert($dataBag);
+        if ($this->recordExists($dataBag)) {
+            $this->updateRecord($dataToInsert, $dataBag);
+        } else {
+            $this->insertRecord($dataToInsert, $dataBag);
+        }
+
+        return $dataBag;
+    }
+
+    private function insertRecord(array $dataToInsert, DataBagInterface $dataBag)
+    {
+        $autoIncrementColumn = $this->getAutoIncrementColumn();
+        $this->connection->insert($this->table, $dataToInsert);
+        $this->emitter->emit('record_insert', $this->table, $dataBag);
+        if ($autoIncrementColumn && $this->callback) {
+            $id = (int)$this->connection->lastInsertId();
+            ($this->callback)($id, $dataBag);
+        }
+    }
+
+    /**
+     * @param array $dataToInsert
+     * @param DataBagInterface $dataBag
+     * @throws DBALException
+     */
+    private function updateRecord(array $dataToInsert, DataBagInterface $dataBag)
+    {
+        $identifier = $this->updateStrategy->getRecordIdentifier($dataBag);
+        $autoIncrementColumn = $this->getAutoIncrementColumn();
+        $this->connection->update(
+            $this->table,
+            $dataToInsert,
+            $identifier
+        );
+        $this->emitter->emit('record_update', $this->table, $dataBag);
+        if ($autoIncrementColumn && $this->callback) {
+            $id = $this->getRecordId($identifier, $autoIncrementColumn);
+
+            ($this->callback)($id, $dataBag);
+        }
+    }
+
+    private function getDataToInsert(DataBagInterface $dataBag): array
+    {
         $columns = $this->utility->getColumns($this->table);
-        $hasAutoIncrement = false;
-        $autoIncrementColumn = '';
         $dataToInsert = [];
         foreach ($columns as $column) {
-            if (!$hasAutoIncrement && $column->getAutoincrement()) {
-                $hasAutoIncrement = true;
-                $autoIncrementColumn = $column->getName();
-            }
             if (isset($dataBag[$column->getName()])) {
                 $dataToInsert[$column->getName()] = $column->getType()->convertToDatabaseValue(
                     $dataBag[$column->getName()],
@@ -84,29 +127,25 @@ class Write implements PipeInterface
                 );
             }
         }
-        $identifier = $this->updateStrategy->getRecordIdentifier($dataBag);
-        if ($this->recordExists($dataBag)) {
-            $this->connection->update(
-                $this->table,
-                $dataToInsert,
-                $identifier
-            );
-            $this->emitter->emit('record_update', $this->table, $dataBag);
-            if ($hasAutoIncrement && $this->callback) {
-                $id = $this->getRecordId($identifier, $autoIncrementColumn);
 
-                ($this->callback)($id, $dataBag);
-            }
-        } else {
-            $this->connection->insert($this->table, $dataToInsert);
-            $this->emitter->emit('record_insert', $this->table, $dataBag);
-            if ($hasAutoIncrement && $this->callback) {
-                $id = (int)$this->connection->lastInsertId();
-                ($this->callback)($id, $dataBag);
+        return $dataToInsert;
+    }
+
+    /**
+     * @return null|string
+     */
+    private function getAutoIncrementColumn(): ?string
+    {
+        if ($this->autoIncrementColumn === null) {
+            $columns = $this->utility->getColumns($this->table);
+            foreach ($columns as $column) {
+                if ($column->getAutoincrement()) {
+                    $this->autoIncrementColumn = $column->getName();
+                }
             }
         }
 
-        return $dataBag;
+        return $this->autoIncrementColumn;
     }
 
     /**
