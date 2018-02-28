@@ -18,16 +18,18 @@ It requires a little bootstrapping to float, but it can be easily done if you ne
 You have a csv file you need to import into database? Let's do that!
 
 1. For the sake of example we'll be importing users into table "users" with columns:
-| id (int) | name (string) | email (string, unique) | age (int) |
-| ---- | ---- | ---- | ---- |
+
+   | id (int) | name (string) | email (string, unique) | age (int) |
+   | ---- | ---- | ---- | ---- |
 2. Our csv file looks like this
-| first | last | email | age |
-| ---- | ---- | ---- | ---- |
-| Arthur| Dayne | morningsword@sunspear.com | 23 |
-| Gerold | Hightower | whitebull@kingsguard.net | 43 |
-| Eddard | Stark | ned@winterfell.net | 36 |
-| Jaime | Lannister | kingslayer@kingsguard.net | 34 |
-| Aegon I |Targaryen | theconqueror@westeros.com | 64 |
+
+    | first | last | email | age |
+    | ---- | ---- | ---- | ---- |
+    | Arthur| Dayne | morningsword@sunspear.com | 23 |
+    | Gerold | Hightower | whitebull@kingsguard.net | 43 |
+    | Eddard | Stark | ned@winterfell.net | 36 |
+    | Jaime | Lannister | kingslayer@kingsguard.net | 34 |
+    | Aegon I |Targaryen | theconqueror@westeros.com | 64 |
 3. Let's use PipeLine builder to set up some known steps.
 We need a little bootstrapping to get DBAL connection and empty emitter.
 
