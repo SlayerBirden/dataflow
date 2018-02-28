@@ -15,13 +15,16 @@
     "require-dev": {
         "phpunit/phpunit": "^7.0",
         "phpunit/dbunit": "^4.0",
-        "phpspec/prophecy": "^1.0"
+        "phpspec/prophecy": "^1.0",
+        "mikey179/vfsStream": "^1.0"
     },
     "autoload": {
         "psr-4": {
-            "SlayerBirden\\DataFlow\\": "src",
-            "SlayerBirden\\DataFlow\\Test\\Functional\\": "tests/functional",
-            "SlayerBirden\\DataFlow\\Test\\Unit\\": "tests/unit"
+            "SlayerBirden\\DataFlow\\": [
+                "src",
+                "tests/unit"
+            ],
+            "SlayerBirden\\DataFlow\\Test\\Functional\\": "tests/functional"
         }
     }
 }

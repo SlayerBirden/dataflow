@@ -13,7 +13,6 @@ class ArrayProvider implements ProviderInterface
     use IdentificationTrait;
 
     private $data = [];
-    private $pointer = 0;
     /**
      * @var string
      */
@@ -52,18 +51,17 @@ class ArrayProvider implements ProviderInterface
     /**
      * @inheritdoc
      */
-    public function provide(): DataBagInterface
+    public function getCask(): \Generator
     {
-        if (isset($this->data[$this->pointer])) {
-            return new SimpleBag($this->data[$this->pointer++]);
+        foreach ($this->data as $row) {
+            yield new SimpleBag($row);
         }
-        throw new EmptyException(sprintf('Provider %s is empty.', $this->getIdentifier()));
     }
 
     /**
      * @inheritdoc
      */
-    public function estimateSize(): int
+    public function getEstimatedSize(): int
     {
         return count($this->data);
     }

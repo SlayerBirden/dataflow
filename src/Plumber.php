@@ -33,21 +33,19 @@ class Plumber
      */
     public function pour(): void
     {
-        try {
-            while ($dataBag = $this->source->provide()) {
-                try {
-                    $this->pipeLine->rewind();
-                    while ($this->pipeLine->valid()) {
-                        $handler = $this->pipeLine->current();
-                        $dataBag = $handler->handle($dataBag);
-                        $this->pipeLine->next();
-                    }
-                } catch (FlowTerminationException $exception) {
-                    $this->emitter->emit('valve_closed', $exception->getIdentifier(), $dataBag);
+        $provider = $this->source->getCask();
+        foreach ($provider as $dataBag) {
+            try {
+                $this->pipeLine->rewind();
+                while ($this->pipeLine->valid()) {
+                    $handler = $this->pipeLine->current();
+                    $dataBag = $handler->handle($dataBag);
+                    $this->pipeLine->next();
                 }
+            } catch (FlowTerminationException $exception) {
+                $this->emitter->emit('valve_closed', $exception->getIdentifier(), $dataBag);
             }
-        } catch (EmptyException $exception) {
-            $this->emitter->emit('empty_cask');
         }
+        $this->emitter->emit('empty_cask');
     }
 }

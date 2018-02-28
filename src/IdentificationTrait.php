@@ -7,6 +7,13 @@ trait IdentificationTrait
 {
     public function getIdentifier(): string
     {
-        return $this->identifier;
+        if (property_exists($this, 'identifier')) {
+            return $this->identifier;
+        }
+        if (property_exists($this, 'id')) {
+            return $this->id;
+        }
+
+        return uniqid();
     }
 }

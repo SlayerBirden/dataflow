@@ -1,10 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace SlayerBirden\DataFlow\Test\Unit\Provider;
+namespace SlayerBirden\DataFlow\Provider;
 
 use PHPUnit\Framework\TestCase;
-use SlayerBirden\DataFlow\Provider\ArrayProvider;
 
 class ArrayProviderTest extends TestCase
 {
@@ -35,7 +34,7 @@ class ArrayProviderTest extends TestCase
         ]);
     }
 
-    public function testEstimateSize()
+    public function testGetEstimatedSize()
     {
         $provider = new ArrayProvider('test2', [
             [
@@ -48,6 +47,6 @@ class ArrayProviderTest extends TestCase
             ]
         ]);
 
-        $this->assertSame(2, $provider->estimateSize());
+        $this->assertSame(2, $provider->getEstimatedSize());
     }
 }

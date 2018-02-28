@@ -1,11 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace SlayerBirden\DataFlow\Test\Unit\Writer\Dbal\UpdateStrategy;
+namespace SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy;
 
 use PHPUnit\Framework\TestCase;
 use SlayerBirden\DataFlow\Data\SimpleBag;
-use SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy\ConfigStrategy;
 
 class ConfigStrategyTest extends TestCase
 {

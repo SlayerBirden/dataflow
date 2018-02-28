@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace SlayerBirden\DataFlow\Test\Unit\Writer\Dbal;
+namespace SlayerBirden\DataFlow\Writer\Dbal;
 
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
@@ -10,8 +10,6 @@ use Prophecy\Prophecy\ObjectProphecy;
 use SlayerBirden\DataFlow\Data\SimpleBag;
 use SlayerBirden\DataFlow\EmitterInterface;
 use SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy\ConfigStrategy;
-use SlayerBirden\DataFlow\Writer\Dbal\Write;
-use SlayerBirden\DataFlow\Writer\Dbal\WriterUtilityInterface;
 
 class WriteTest extends TestCase
 {

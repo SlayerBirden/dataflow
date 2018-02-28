@@ -5,7 +5,10 @@ namespace SlayerBirden\DataFlow;
 
 interface ProviderInterface
 {
-    public function provide(): DataBagInterface;
+    /**
+     * @return \Generator|DataBagInterface[]
+     */
+    public function getCask(): \Generator;
 
     public function getIdentifier(): string;
 
@@ -14,5 +17,5 @@ interface ProviderInterface
      *
      * @return int
      */
-    public function estimateSize(): int;
+    public function getEstimatedSize(): int;
 }

@@ -1,13 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace SlayerBirden\DataFlow\Test\Unit;
+namespace SlayerBirden\DataFlow;
 
 use PHPUnit\Framework\TestCase;
 use SlayerBirden\DataFlow\Data\SimpleBag;
-use SlayerBirden\DataFlow\DataBagInterface;
-use SlayerBirden\DataFlow\HandlerInterface;
-use SlayerBirden\DataFlow\PipeLine;
 
 class PipeLineTest extends TestCase
 {
