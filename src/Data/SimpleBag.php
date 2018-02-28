@@ -22,4 +22,14 @@ class SimpleBag extends \ArrayObject implements DataBagInterface
     {
         return $this->getArrayCopy();
     }
+
+    /**
+     * Return string representation of the bag.
+     *
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return json_encode($this);
+    }
 }

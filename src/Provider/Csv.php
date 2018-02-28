@@ -35,7 +35,7 @@ class Csv implements ProviderInterface
      * @param string $id
      * @param string $fileName
      * @param bool $headerRow
-     * @param array|null $header
+     * @param string[]|null $header
      * @throws FileDoesNotExist
      * @throws HeaderMissing
      */
