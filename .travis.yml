@@ -8,7 +8,7 @@ install: composer install
 
 before_script:
   - mysql -e 'create database dataflow;'
-  - cp -f tests/functional/config/Db/db-config.travis.php tests/functional/config/Db/db-config.php
+  - cp -f tests/functional/config/db-config.travis.php tests/functional/config/db-config.php
 
 script:
   - vendor/bin/phpunit --report-useless-tests --coverage-clover ./coverage.clover
