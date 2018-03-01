@@ -73,7 +73,7 @@ class DbalMigrationTest extends TestCase
             })
             ->map('name', new class implements MapperCallbackInterface
             {
-                public function __invoke($value, ?DataBagInterface $dataBag = null)
+                public function __invoke($value, DataBagInterface $dataBag)
                 {
                     return $dataBag['first'] . ' ' . $dataBag['last'];
                 }

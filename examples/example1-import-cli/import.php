@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use Doctrine\DBAL\DriverManager;
+use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\Pipe\MapperCallbackInterface;
 use SlayerBirden\DataFlow\PipelineBuilder;
 use SlayerBirden\DataFlow\Plumber;
@@ -25,7 +26,7 @@ $emitter = new class implements \SlayerBirden\DataFlow\EmitterInterface
 $pipeline = (new PipelineBuilder($emitter))
     ->map('name', new class implements MapperCallbackInterface
     {
-        public function __invoke($value, ?\SlayerBirden\DataFlow\DataBagInterface $dataBag = null)
+        public function __invoke($value, DataBagInterface $dataBag)
         {
             return $dataBag['first'] . ' ' . $dataBag['last'];
         }

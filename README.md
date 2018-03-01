@@ -68,10 +68,12 @@ $emitter = new class implements \SlayerBirden\DataFlow\EmitterInterface
 ```
 6. There are something else we need to do: concat firstName and lastName and assign to "name"
 ```php
+use SlayerBirden\DataFlow\DataBagInterface;
+
 $pipeline = (new PipelineBuilder($emitter))
     ->map('name', new class implements MapperCallbackInterface
     {
-        public function __invoke($value, ?\SlayerBirden\DataFlow\DataBagInterface $dataBag = null)
+        public function __invoke($value, DataBagInterface $dataBag)
         {
             return $dataBag['first'] . ' ' . $dataBag['last'];
         }

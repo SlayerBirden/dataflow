@@ -11,8 +11,8 @@ interface MapperCallbackInterface
      * Transform data coming in "value" and return it.
      *
      * @param mixed $value
-     * @param DataBagInterface $dataBag|null
+     * @param DataBagInterface $dataBag
      * @return string
      */
-    public function __invoke($value, ?DataBagInterface $dataBag = null);
+    public function __invoke($value, DataBagInterface $dataBag);
 }
