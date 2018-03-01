@@ -30,6 +30,12 @@ class Copy implements PipeInterface
         $this->to = $to;
     }
 
+    /**
+     * Copy data from one key to another. Create if doesn't exist.
+     *
+     * @param DataBagInterface $dataBag
+     * @return DataBagInterface
+     */
     public function pass(DataBagInterface $dataBag): DataBagInterface
     {
         $from = $dataBag[$this->from] ?? null;

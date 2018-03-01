@@ -25,6 +25,12 @@ class Delete implements PipeInterface
         $this->fieldNames = $fieldNames;
     }
 
+    /**
+     * Delete data from the bag by key[s]
+     *
+     * @param DataBagInterface $dataBag
+     * @return DataBagInterface
+     */
     public function pass(DataBagInterface $dataBag): DataBagInterface
     {
         foreach ($this->fieldNames as $name) {

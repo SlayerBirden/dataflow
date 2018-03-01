@@ -30,6 +30,12 @@ class Swap implements PipeInterface
         $this->second = $second;
     }
 
+    /**
+     * Swap one key with another.
+     *
+     * @param DataBagInterface $dataBag
+     * @return DataBagInterface
+     */
     public function pass(DataBagInterface $dataBag): DataBagInterface
     {
         $first = $dataBag[$this->first] ?? null;

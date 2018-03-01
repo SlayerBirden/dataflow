@@ -8,8 +8,12 @@ Build a pipeline to pour your data through!
 ## About
 
 This is a low level lib that helps you with building a data migration process.
-It requires a little bootstrapping to float, but it can be easily done if you need just a minimal process
- or just looking to test things out.
+It requires a little bootstrapping to float, but it can be easily done if you just need a minimal process
+ or looking to test things out.
+
+The main idea is that you're building a pipeline where each section can mutate the data that's flowing through.
+It allows process to be extremely flexible, since each new step can potentially get (**completely**) transformed data.
+It also can be very dangerous, since mistake can be costly, hence we crafted awesome error handling and reporting mechanisms.
 
 ## Examples
 
@@ -99,14 +103,14 @@ $pipeline = (new PipelineBuilder($emitter))
 ![results](examples/example1-import-cli/2-cli-runs.png)
 
 ## Goals
-* Easy to maintain. Strong reporting shows what exactly is wrong with the data or the process.
-* Flexible. Extremely flexible workflow allows to work with different import/export/migration scenarios.
+* **Easy to maintain**. Strong reporting shows what exactly went wrong.
+* **Flexible**. Extremely flexible workflow allows to work with different import/export/migration scenarios.
     * one file -> multiple tables
     * multiple files -> one table
-    * supports dynamic connection
+    * supports dynamic DB connection
     * supports different source types and destination types
-* Fast. Low level operations produce maximum flow speed.
-* Stable. Strong test coverage guarantees bug-free groundwork.
+* **Fast**. Low level operations produce maximum flow speed.
+* **Stable**. Strong test coverage guarantees bug-free groundwork.
 
 ## Influences
 * [Ddeboer Data Import library](https://github.com/ddeboer/data-import)
