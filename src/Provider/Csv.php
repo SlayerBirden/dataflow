@@ -50,7 +50,7 @@ class Csv implements ProviderInterface
         $this->file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
         if (!$headerRow && empty($header)) {
             throw new HeaderMissing(
-                sprintf('Can not find header in the file %s.', $this->file->getFilename())
+                sprintf('You did not provide header for the file %s.', $this->file->getFilename())
             );
         }
         $this->headerRow = $headerRow;
