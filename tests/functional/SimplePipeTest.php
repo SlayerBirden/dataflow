@@ -11,6 +11,7 @@ use SlayerBirden\DataFlow\Pipe\MapperCallbackInterface;
 use SlayerBirden\DataFlow\PipelineBuilder;
 use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\ArrayProvider;
+use SlayerBirden\DataFlow\Writer\ArrayWrite;
 
 class SimplePipeTest extends TestCase
 {
@@ -36,8 +37,8 @@ class SimplePipeTest extends TestCase
                     return $dataBag['firstname'] . ' ' . $dataBag['lastname'];
                 }
             })
-            ->arrayWrite($this->storage, null)
-            ->getPipeline();
+            ->addSection(new ArrayWrite('testWrite', $this->storage))
+            ->build();
     }
 
     public function testSimplePipeFlow()

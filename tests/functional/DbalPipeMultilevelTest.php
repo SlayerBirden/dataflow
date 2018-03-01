@@ -17,6 +17,9 @@ use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\ArrayProvider;
 use SlayerBirden\DataFlow\Test\Functional\Exception\ConnectionException;
 use SlayerBirden\DataFlow\Writer\Dbal\AutoIncrementCallbackInterface;
+use SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy\UniqueIndexStrategy;
+use SlayerBirden\DataFlow\Writer\Dbal\Write;
+use SlayerBirden\DataFlow\Writer\Dbal\WriterUtility;
 
 class DbalPipeMultilevelTest extends TestCase
 {
@@ -63,20 +66,36 @@ class DbalPipeMultilevelTest extends TestCase
 
         parent::setUp();
         $this->emitter = new BlackHole();
+        $utility = new WriterUtility($this->connection);
         $this->pipeline = (new PipelineBuilder($this->emitter))
             ->cp('name', 'hero_name') // copy to tmp hero_name
             ->cp('team', 'name') // copy team to name
-            ->dbalWrite('teams', $this->connection, new class implements AutoIncrementCallbackInterface
-            {
-                public function __invoke(int $id, DataBagInterface $dataBag)
+            ->addSection(new Write(
+                'teams_write',
+                $this->connection,
+                'teams',
+                $utility,
+                new UniqueIndexStrategy('teams', $utility),
+                $this->emitter,
+                new class implements AutoIncrementCallbackInterface
                 {
-                    $dataBag['team_id'] = $id;
+                    public function __invoke(int $id, DataBagInterface $dataBag)
+                    {
+                        $dataBag['team_id'] = $id;
+                    }
                 }
-            })
+            ))
             ->cp('hero_name', 'name') // copy hero_name back to name
             ->delete(['hero_name', 'team'])
-            ->dbalWrite('heroes', $this->connection)
-            ->getPipeline();
+            ->addSection(new Write(
+                'heroes_write',
+                $this->connection,
+                'heroes',
+                $utility,
+                new UniqueIndexStrategy('heroes', $utility),
+                $this->emitter
+            ))
+            ->build();
     }
 
     protected function getTearDownOperation()

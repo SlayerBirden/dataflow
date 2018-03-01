@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace SlayerBirden\DataFlow;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Schema\Index;
 use SlayerBirden\DataFlow\Pipe\Copy;
 use SlayerBirden\DataFlow\Pipe\Delete;
 use SlayerBirden\DataFlow\Pipe\Filter;
@@ -12,11 +10,6 @@ use SlayerBirden\DataFlow\Pipe\FilterCallbackInterface;
 use SlayerBirden\DataFlow\Pipe\Map;
 use SlayerBirden\DataFlow\Pipe\MapperCallbackInterface;
 use SlayerBirden\DataFlow\Pipe\Swap;
-use SlayerBirden\DataFlow\Writer\ArrayWrite;
-use SlayerBirden\DataFlow\Writer\Dbal\AutoIncrementCallbackInterface;
-use SlayerBirden\DataFlow\Writer\Dbal\Write;
-use SlayerBirden\DataFlow\Writer\Dbal\WriterUtilityInterface;
-use SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy\UniqueIndexStrategy;
 
 class PipelineBuilder implements PipelineBuilderInterface
 {
@@ -24,10 +17,6 @@ class PipelineBuilder implements PipelineBuilderInterface
      * @var PipeLineInterface
      */
     private $pipeline;
-    /**
-     * @var WriterUtilityInterface
-     */
-    private $utility;
 
     private $pipesCount = 0;
     /**
@@ -51,6 +40,7 @@ class PipelineBuilder implements PipelineBuilderInterface
     public function addSection(PipeInterface $handler, int $priority = 0): PipelineBuilder
     {
         $this->pipeline->insert($handler, $priority);
+        $this->pipesCount++;
         return $this;
     }
 
@@ -94,78 +84,8 @@ class PipelineBuilder implements PipelineBuilderInterface
         return $this->addSection(new Copy($id, $from, $to));
     }
 
-    public function dbalWrite(
-        string $table,
-        Connection $connection,
-        ?AutoIncrementCallbackInterface $callback = null,
-        ?string $id = null
-    ): PipelineBuilder {
-        if (!$id) {
-            $id = 'dbal-write' . $this->pipesCount++ . '-' . $table;
-        }
-        return $this->addSection(new Write(
-            $id,
-            $connection,
-            $table,
-            $this->getDbalUtility($connection),
-            (new UniqueIndexStrategy($table, $this->getDbalUtility($connection))),
-            $this->emitter,
-            $callback
-        ));
-    }
-
-    public function arrayWrite(
-        array &$storage,
-        ?string $id = null
-    ): PipelineBuilder {
-        if (!$id) {
-            $id = 'array-write' . $this->pipesCount++;
-        }
-        return $this->addSection(new ArrayWrite($id, $storage));
-    }
-
-    public function getPipeline(): PipeLineInterface
+    public function build(): PipeLineInterface
     {
         return $this->pipeline;
-    }
-
-    public function getDbalUtility(Connection $connection): WriterUtilityInterface
-    {
-        if ($this->utility === null) {
-            $this->utility = new class($connection) implements WriterUtilityInterface
-            {
-                /**
-                 * @var Connection
-                 */
-                private $connection;
-                private $columns = [];
-                private $keys = [];
-
-                public function __construct(Connection $connection)
-                {
-                    $this->connection = $connection;
-                }
-
-                public function getColumns(string $table): array
-                {
-                    if (!isset($this->columns[$table])) {
-                        $this->columns[$table] = $this->connection->getSchemaManager()->listTableColumns($table);
-                    }
-                    return $this->columns[$table];
-                }
-
-                public function getUniqueKeys(string $table): array
-                {
-                    if (!isset($this->keys[$table])) {
-                        $allKeys = $this->connection->getSchemaManager()->listTableIndexes($table);
-                        $this->keys[$table] = array_filter($allKeys, function (Index $index) {
-                            return $index->isUnique() || $index->isPrimary();
-                        });
-                    }
-                    return $this->keys[$table];
-                }
-            };
-        }
-        return $this->utility;
     }
 }

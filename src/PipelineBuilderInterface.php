@@ -7,5 +7,5 @@ interface PipelineBuilderInterface
 {
     public function addSection(PipeInterface $handler, int $priority = 0);
 
-    public function getPipeline(): PipeLineInterface;
+    public function build(): PipeLineInterface;
 }

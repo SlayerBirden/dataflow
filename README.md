@@ -3,7 +3,7 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/SlayerBirden/dataflow/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/SlayerBirden/dataflow/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/SlayerBirden/dataflow/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/SlayerBirden/dataflow/?branch=master)
 
-Build a pipeline to flow your data through!
+Build a pipeline to pour your data through!
 
 ## About
 
@@ -31,23 +31,36 @@ You have a csv file you need to import into database? Let's do that!
     | Jaime | Lannister | kingslayer@kingsguard.net | 34 |
     | Aegon I |Targaryen | theconqueror@westeros.com | 64 |
 3. Let's use PipeLine builder to set up some known steps.
-We need a little bootstrapping to get DBAL connection and empty emitter.
+We need a little bootstrapping to get DBAL writer and empty emitter.
 
 ```php
 use Doctrine\DBAL\DriverManager;
 use SlayerBirden\DataFlow\Emitter\BlackHole;
 use SlayerBirden\DataFlow\PipelineBuilder;
+use SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy\UniqueIndexStrategy;
+use SlayerBirden\DataFlow\Writer\Dbal\Write;
+use SlayerBirden\DataFlow\Writer\Dbal\WriterUtility;
 
 # bootstrap
 $connection = DriverManager::getConnection([
     'url' => 'mysql://test-user:testpwd@localhost:4486/foo?charset=UTF8',
 ]);
+// this is just a utility class to "cache" schema info
+$utility = new WriterUtility($connection);
+$dbWrite = new Write(
+    'users_write', // pipe ID for reporting
+    $connection, // DBAL connection
+    'users', // db table name
+    $utility, // utility class
+    new UniqueIndexStrategy('users', $utility), // update or insert will depend on unique fields in the table
+    $this->emitter
+);
 $emitter = new BlackHole();
 
 # pipeline
 $pipeline = (new PipelineBuilder($emitter))
-    ->dbalWrite('users', $connection)
-    ->getPipeline();
+    ->addSection($dbWrite)
+    ->build();
 ```
 4. Now initiate the Plumber and pour.
 ```php
@@ -78,9 +91,22 @@ $pipeline = (new PipelineBuilder($emitter))
             return $dataBag['first'] . ' ' . $dataBag['last'];
         }
     })
-    ->dbalWrite('users', $connection)
-    ->getPipeline();
+    ->addSection($dbWrite)
+    ->build();
 ```
 7. Full file can be found under `examples/example1-import-cli/import.php`.
 8. Logged results:
 ![results](examples/example1-import-cli/2-cli-runs.png)
+
+## Goals
+* Easy to maintain. Strong reporting shows what exactly is wrong with the data or the process.
+* Flexible. Extremely flexible workflow allows to work with different import/export/migration scenarios.
+    * one file -> multiple tables
+    * multiple files -> one table
+    * supports dynamic connection
+    * supports different source types and destination types
+* Fast. Low level operations produce maximum flow speed.
+* Stable. Strong test coverage guarantees bug-free groundwork.
+
+## Influences
+* [Ddeboer Data Import library](https://github.com/ddeboer/data-import)

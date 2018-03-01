@@ -17,6 +17,9 @@ use SlayerBirden\DataFlow\PipelineBuilder;
 use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\Dbal;
 use SlayerBirden\DataFlow\Test\Functional\Exception\ConnectionException;
+use SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy\UniqueIndexStrategy;
+use SlayerBirden\DataFlow\Writer\Dbal\Write;
+use SlayerBirden\DataFlow\Writer\Dbal\WriterUtility;
 
 class DbalMigrationTest extends TestCase
 {
@@ -62,6 +65,7 @@ class DbalMigrationTest extends TestCase
 
         parent::setUp();
         $this->emitter = new BlackHole();
+        $utility = new WriterUtility($this->connection);
         $this->pipeline = (new PipelineBuilder($this->emitter))
             ->delete(['id'])
             ->filter(new class implements FilterCallbackInterface
@@ -78,8 +82,15 @@ class DbalMigrationTest extends TestCase
                     return $dataBag['first'] . ' ' . $dataBag['last'];
                 }
             })
-            ->dbalWrite('heroes', $this->connection)
-            ->getPipeline();
+            ->addSection(new Write(
+                'heroes_write',
+                $this->connection,
+                'heroes',
+                $utility,
+                new UniqueIndexStrategy('heroes', $utility),
+                $this->emitter
+            ))
+            ->build();
     }
 
     /**

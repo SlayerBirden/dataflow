@@ -17,6 +17,9 @@ use SlayerBirden\DataFlow\PipelineBuilder;
 use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\ArrayProvider;
 use SlayerBirden\DataFlow\Test\Functional\Exception\ConnectionException;
+use SlayerBirden\DataFlow\Writer\Dbal\UpdateStrategy\UniqueIndexStrategy;
+use SlayerBirden\DataFlow\Writer\Dbal\Write;
+use SlayerBirden\DataFlow\Writer\Dbal\WriterUtility;
 
 class DbalPipeTest extends TestCase
 {
@@ -51,6 +54,7 @@ class DbalPipeTest extends TestCase
 
         parent::setUp();
         $this->emitter = new BlackHole();
+        $utility = new WriterUtility($this->connection);
         $this->pipeline = (new PipelineBuilder($this->emitter))
             ->map('name', new class implements MapperCallbackInterface
             {
@@ -59,8 +63,15 @@ class DbalPipeTest extends TestCase
                     return $dataBag['firstname'] . ' ' . $dataBag['lastname'];
                 }
             })
-            ->dbalWrite('heroes', $this->connection)
-            ->getPipeline();
+            ->addSection(new Write(
+                'heroes_write',
+                $this->connection,
+                'heroes',
+                $utility,
+                new UniqueIndexStrategy('heroes', $utility),
+                $this->emitter
+            ))
+            ->build();
     }
 
     protected function getTearDownOperation()
