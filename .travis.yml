@@ -4,7 +4,7 @@ php:
   - "7.2"
   - "7.1"
 
-install: composer install
+install: composer install --no-interaction
 
 before_script:
   - mysql -e 'create database dataflow;'
