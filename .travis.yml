@@ -1,6 +1,7 @@
 language: php
 
 php:
+  - "7.3"
   - "7.2"
   - "7.1"
 
@@ -10,8 +11,11 @@ cache:
   directories:
     - "$HOME/.composer/cache"
 
-before_script:
-  - mysql -e 'create database dataflow;'
+services:
+  - mysql
+
+before_install:
+  - mysql -e 'create database if not exists dataflow;'
   - cp -f tests/functional/config/db-config.travis.php tests/functional/config/db-config.php
 
 script:
