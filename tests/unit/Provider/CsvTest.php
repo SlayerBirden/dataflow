@@ -6,6 +6,7 @@ namespace SlayerBirden\DataFlow\Provider;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 use PHPUnit\Framework\TestCase;
+use SlayerBirden\DataFlow\Provider\Exception\RowInvalid;
 
 /**
  * Required to have this override for testing with realpath
@@ -81,9 +82,6 @@ class CsvTest extends TestCase
         ], $actual);
     }
 
-    /**
-     * @expectedException \SlayerBirden\DataFlow\Provider\Exception\RowInvalid
-     */
     public function testInvalidHeader()
     {
         $csv = new Csv('testId', self::$root->getChild('users.csv')->url(), true, [
@@ -94,7 +92,7 @@ class CsvTest extends TestCase
         $cask = $csv->getCask();
         // trigger generator
         foreach ($cask as $row) {
-            #pass
+            $this->assertInstanceOf(RowInvalid::class, $row);
         }
     }
 

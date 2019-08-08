@@ -75,15 +75,16 @@ class Csv implements ProviderInterface
         while ($this->file->valid()) {
             $row = $this->file->current();
             if (count($row) !== count($this->header)) {
-                throw new RowInvalid(
+                yield new RowInvalid(
                     sprintf(
                         'Invalid row %s for header %s. Column count mismatch.',
                         json_encode($row),
                         json_encode($this->header)
                     )
                 );
+            } else {
+                yield new SimpleBag(array_combine($this->header, $row));
             }
-            yield new SimpleBag(array_combine($this->header, $row));
             $this->file->next();
         }
     }

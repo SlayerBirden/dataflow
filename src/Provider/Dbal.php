@@ -51,7 +51,7 @@ class Dbal implements ProviderInterface
             try {
                 $stmt = $this->connection->query($qb->getSQL());
             } catch (DBALException $e) {
-                throw new ProviderException($e->getMessage(), $e->getCode(), $e);
+                yield new ProviderException($e->getMessage(), $e->getCode(), $e);
             }
             $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $count = count($result);
