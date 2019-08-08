@@ -4,9 +4,11 @@ declare(strict_types=1);
 namespace SlayerBirden\DataFlow\Provider;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use SlayerBirden\DataFlow\Data\SimpleBag;
 use SlayerBirden\DataFlow\DataBagInterface;
 use SlayerBirden\DataFlow\IdentificationTrait;
+use SlayerBirden\DataFlow\Provider\Exception\ProviderException;
 use SlayerBirden\DataFlow\ProviderInterface;
 
 class Dbal implements ProviderInterface
@@ -36,7 +38,6 @@ class Dbal implements ProviderInterface
 
     /**
      * @return \Generator|DataBagInterface[]
-     * @throws \Doctrine\DBAL\DBALException
      */
     public function getCask(): \Generator
     {
@@ -47,7 +48,11 @@ class Dbal implements ProviderInterface
                 ->from($this->table)
                 ->setFirstResult($offset)
                 ->setMaxResults(self::LIMIT);
-            $stmt = $this->connection->query($qb->getSQL());
+            try {
+                $stmt = $this->connection->query($qb->getSQL());
+            } catch (DBALException $e) {
+                throw new ProviderException($e->getMessage(), $e->getCode(), $e);
+            }
             $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $count = count($result);
             if ($count) {
@@ -61,6 +66,7 @@ class Dbal implements ProviderInterface
 
     /**
      * @inheritdoc
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function getEstimatedSize(): int
     {

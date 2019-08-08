@@ -82,7 +82,7 @@ class CsvTest extends TestCase
     }
 
     /**
-     * @expectedException \SlayerBirden\DataFlow\Provider\Exception\HeaderInvalid
+     * @expectedException \SlayerBirden\DataFlow\Provider\Exception\RowInvalid
      */
     public function testInvalidHeader()
     {

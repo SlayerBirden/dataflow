@@ -6,7 +6,7 @@ namespace SlayerBirden\DataFlow\Provider;
 use SlayerBirden\DataFlow\Data\SimpleBag;
 use SlayerBirden\DataFlow\IdentificationTrait;
 use SlayerBirden\DataFlow\Provider\Exception\FileDoesNotExist;
-use SlayerBirden\DataFlow\Provider\Exception\HeaderInvalid;
+use SlayerBirden\DataFlow\Provider\Exception\RowInvalid;
 use SlayerBirden\DataFlow\Provider\Exception\HeaderMissing;
 use SlayerBirden\DataFlow\ProviderInterface;
 
@@ -59,7 +59,7 @@ class Csv implements ProviderInterface
 
     /**
      * @inheritdoc
-     * @throws HeaderInvalid
+     * @throws RowInvalid
      */
     public function getCask(): \Generator
     {
@@ -75,11 +75,11 @@ class Csv implements ProviderInterface
         while ($this->file->valid()) {
             $row = $this->file->current();
             if (count($row) !== count($this->header)) {
-                throw new HeaderInvalid(
+                throw new RowInvalid(
                     sprintf(
-                        'Invalid header %s for row %s. Column count mismatch.',
-                        json_encode($this->header),
-                        json_encode($row)
+                        'Invalid row %s for header %s. Column count mismatch.',
+                        json_encode($row),
+                        json_encode($this->header)
                     )
                 );
             }
@@ -99,7 +99,11 @@ class Csv implements ProviderInterface
         // attempt to reach max (will reach last line);
         $prevPos = $this->file->key();
         $this->file->seek(PHP_INT_MAX);
-        $numberOfLines = $this->file->key() + 1;
+        $numberOfLines = $this->file->key();
+        if ($this->file->valid()) {
+            // this line is not eof
+            $numberOfLines += 1;
+        }
         if ($this->headerRow) {
             // subtract header row if it's present in the file
             --$numberOfLines;

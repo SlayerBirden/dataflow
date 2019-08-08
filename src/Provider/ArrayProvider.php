@@ -38,7 +38,7 @@ class ArrayProvider implements ProviderInterface
             $localKeys = array_keys($row);
             sort($localKeys);
             if (isset($keys)) {
-                if ($keys != $localKeys) {
+                if ($keys !== $localKeys) {
                     throw new InvalidDataException(
                         sprintf('Row #(%s) has different structure than the 1st element.', $key)
                     );

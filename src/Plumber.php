@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SlayerBirden\DataFlow;
 
 use SlayerBirden\DataFlow\Exception\FlowTerminationException;
+use SlayerBirden\DataFlow\Provider\Exception\ProviderExceptionInterface;
 
 class Plumber
 {
@@ -33,17 +34,21 @@ class Plumber
     public function pour(): void
     {
         $provider = $this->source->getCask();
-        foreach ($provider as $dataBag) {
-            try {
-                $this->pipeLine->rewind();
-                while ($this->pipeLine->valid()) {
-                    $handler = $this->pipeLine->current();
-                    $dataBag = $handler->pass($dataBag);
-                    $this->pipeLine->next();
+        try {
+            foreach ($provider as $dataBag) {
+                try {
+                    $this->pipeLine->rewind();
+                    while ($this->pipeLine->valid()) {
+                        $handler = $this->pipeLine->current();
+                        $dataBag = $handler->pass($dataBag);
+                        $this->pipeLine->next();
+                    }
+                } catch (FlowTerminationException $exception) {
+                    $this->emitter->emit('valve_closed', $exception->getIdentifier(), $dataBag);
                 }
-            } catch (FlowTerminationException $exception) {
-                $this->emitter->emit('valve_closed', $exception->getIdentifier(), $dataBag);
             }
+        } catch (ProviderExceptionInterface $exception) {
+            $this->emitter->emit('provider_error', $exception->getMessage());
         }
         $this->emitter->emit('empty_cask');
     }
