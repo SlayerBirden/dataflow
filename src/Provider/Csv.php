@@ -33,21 +33,16 @@ class Csv implements ProviderInterface
 
     /**
      * @param string $id
-     * @param string $fileName
+     * @param \SplFileObject $file
      * @param bool $headerRow
      * @param string[]|null $header
      * @throws FileDoesNotExist
      * @throws HeaderMissing
      */
-    public function __construct(string $id, string $fileName, bool $headerRow = true, ?array $header = null)
+    public function __construct(string $id, \SplFileObject $file, bool $headerRow = true, ?array $header = null)
     {
         $this->id = $id;
-        $path = realpath($fileName);
-        if ($path === false) {
-            throw new FileDoesNotExist(sprintf('Could not find file %s.', $fileName));
-        }
-        $this->file = new \SplFileObject($path);
-        $this->file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+        $this->file = $file;
         if (!$headerRow && empty($header)) {
             throw new HeaderMissing(
                 sprintf('You did not provide header for the file %s.', $this->file->getFilename())

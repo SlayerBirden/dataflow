@@ -49,24 +49,20 @@ class CsvTest extends TestCase
     }
 
     /**
-     * @expectedException \SlayerBirden\DataFlow\Provider\Exception\FileDoesNotExist
-     */
-    public function testNonExistingFile()
-    {
-        new Csv('testId', self::$root->url() . '/fictional.file', true);
-    }
-
-    /**
      * @expectedException \SlayerBirden\DataFlow\Provider\Exception\HeaderMissing
      */
     public function testNoHeader()
     {
-        new Csv('testId', self::$root->getChild('users.csv')->url(), false);
+        $file = new \SplFileObject(self::$root->getChild('users.csv')->url());
+        $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+        new Csv('testId', $file, false);
     }
 
     public function testGetCask()
     {
-        $csv = new Csv('testId', self::$root->getChild('users.csv')->url());
+        $file = new \SplFileObject(self::$root->getChild('users.csv')->url());
+        $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+        $csv = new Csv('testId', $file);
 
         $cask = $csv->getCask();
         $actual = [];
@@ -84,7 +80,9 @@ class CsvTest extends TestCase
 
     public function testInvalidHeader()
     {
-        $csv = new Csv('testId', self::$root->getChild('users.csv')->url(), true, [
+        $file = new \SplFileObject(self::$root->getChild('users.csv')->url());
+        $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+        $csv = new Csv('testId', $file, true, [
             'firstname',
             'lastname',
             'age'
@@ -98,7 +96,9 @@ class CsvTest extends TestCase
 
     public function testGetCaskWithOverridenHeader()
     {
-        $csv = new Csv('testId', self::$root->getChild('users.csv')->url(), true, [
+        $file = new \SplFileObject(self::$root->getChild('users.csv')->url());
+        $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+        $csv = new Csv('testId', $file, true, [
             'first',
             'last',
         ]);
@@ -119,7 +119,9 @@ class CsvTest extends TestCase
 
     public function testGetEstimatedSize()
     {
-        $csv = new Csv('testId', self::$root->getChild('users.csv')->url());
+        $file = new \SplFileObject(self::$root->getChild('users.csv')->url());
+        $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+        $csv = new Csv('testId', $file);
 
         $this->assertSame(1, $csv->getEstimatedSize());
     }

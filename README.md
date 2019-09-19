@@ -71,7 +71,9 @@ $pipeline = (new PipelineBuilder($emitter))
 use SlayerBirden\DataFlow\Plumber;
 use SlayerBirden\DataFlow\Provider\Csv;
 ...
-(new Plumber(new Csv('users_file', __DIR__ . '/users.csv'), $pipeline, $emitter))->pour();
+$file = new \SplFileObject(__DIR__ . '/users.csv');
+$file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+(new Plumber(new Csv('users_file', $file), $pipeline, $emitter))->pour();
 ```
 5. We want some reporting to know what's going on. Let's implement basic stdOut emitter.
 ```php

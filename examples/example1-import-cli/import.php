@@ -48,4 +48,7 @@ $pipeline = (new PipelineBuilder($emitter))
     ->addSection($dbWrite)
     ->build();
 
-(new Plumber(new Csv('users_file', __DIR__ . '/users.csv'), $pipeline, $emitter))->pour();
+$file = new \SplFileObject(__DIR__ . '/users.csv');
+$file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY);
+
+(new Plumber(new Csv('users_file', $file), $pipeline, $emitter))->pour();
